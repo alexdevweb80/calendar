@@ -17,8 +17,16 @@
         </div>
     </div>
     
+    <!-- Onglets -->
+    <div class="tabs-bar">
+        <button class="tab-btn active" data-tab="calendar">📅 Calendrier</button>
+        <button class="tab-btn" data-tab="rooms">👥 Salons</button>
+    </div>
+
     <div class="dashboard-container">
-        <!-- Calendrier -->
+
+        <!-- ═══ ONGLET CALENDRIER ═══ -->
+        <div id="tab-calendar" class="tab-content active">
         <div class="glass-card calendar-container">
             <div class="calendar-header">
                 <div class="calendar-controls">
@@ -92,6 +100,23 @@
             </div>
             <div id="monthCarouselTrack" class="month-carousel-track"></div>
         </div>
+        </div><!-- fin tab-calendar -->
+
+        <!-- ═══ ONGLET SALONS ═══ -->
+        <div id="tab-rooms" class="tab-content">
+            <div class="glass-card rooms-container">
+                <div class="rooms-header">
+                    <h2 class="neon-text">👥 Mes salons</h2>
+                    <div class="rooms-header-actions">
+                        <button id="openJoinRoomBtn" class="neon-button neon-button-secondary" type="button">🔑 Rejoindre un salon</button>
+                        <button id="openCreateRoomBtn" class="neon-button" type="button">+ Creer un salon</button>
+                    </div>
+                </div>
+                <div id="roomsList" class="rooms-list"></div>
+                <div id="roomDetailPanel" class="room-detail-panel" style="display:none;"></div>
+            </div>
+        </div><!-- fin tab-rooms -->
+
     </div>
     
     <!-- Panneau detail du jour -->
@@ -141,6 +166,57 @@
         </div>
     </div>
     
+    <!-- Modal creation de salon -->
+    <div id="createRoomModal" class="modal" style="display: none;">
+        <div class="modal-content glass-card">
+            <span class="close-room-modal">&times;</span>
+            <h3 class="neon-text">Creer un salon</h3>
+            <div class="input-group">
+                <label>Nom du salon</label>
+                <input type="text" id="newRoomName" class="glass-input" placeholder="Ex: Equipe projet" required>
+            </div>
+            <div class="input-group">
+                <label>Icone</label>
+                <select id="newRoomIcon" class="glass-input">
+                    <option value="👥">👥 Equipe</option>
+                    <option value="🏠">🏠 Maison</option>
+                    <option value="💼">💼 Travail</option>
+                    <option value="🎉">🎉 Fete</option>
+                    <option value="⚽">⚽ Sport</option>
+                    <option value="🎓">🎓 Etudes</option>
+                    <option value="✈️">✈️ Voyage</option>
+                    <option value="🎵">🎵 Musique</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Mot de passe du salon</label>
+                <input type="password" id="newRoomPassword" class="glass-input" placeholder="Min. 4 caracteres" required>
+            </div>
+            <div class="modal-buttons">
+                <button id="createRoomBtn" class="neon-button" type="button">Creer le salon</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal rejoindre un salon -->
+    <div id="joinRoomModal" class="modal" style="display: none;">
+        <div class="modal-content glass-card">
+            <span class="close-join-modal">&times;</span>
+            <h3 class="neon-text">🔑 Rejoindre un salon</h3>
+            <div class="input-group">
+                <label>Code du salon</label>
+                <input type="text" id="joinRoomCode" class="glass-input" placeholder="Ex: A3K7W2" maxlength="6" style="text-transform:uppercase; letter-spacing:3px; font-size:1.2rem; text-align:center;" required>
+            </div>
+            <div class="input-group">
+                <label>Mot de passe</label>
+                <input type="password" id="joinRoomPassword" class="glass-input" placeholder="Mot de passe du salon" required>
+            </div>
+            <div class="modal-buttons">
+                <button id="joinRoomBtn" class="neon-button" type="button">Rejoindre</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Frise chronologique -->
     <div class="timeline-container glass-card">
         <div class="timeline-header">
@@ -156,6 +232,7 @@
     <script src="js/firebase-config.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/calendar.js"></script>
+    <script src="js/rooms.js"></script>
     <script src="js/widgets.js"></script>
 </body>
 </html>

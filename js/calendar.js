@@ -39,29 +39,34 @@ async function loadEvents() {
     const { startDate, endDate } = getCalendarGridBounds(currentDate);
 
     try {
+        // Query simple par userId uniquement (pas besoin d'index composite)
         const snapshot = await db.collection('events')
             .where('userId', '==', currentUserId)
-            .where('date', '>=', startDate)
-            .where('date', '<=', endDate)
             .get();
 
         events = [];
         snapshot.forEach(doc => {
-            events.push({
-                id: doc.id,
-                ...doc.data(),
-                date: doc.data().date.toDate()
-            });
+            const data = doc.data();
+            if (!data.date) return;
+            const eventDate = data.date.toDate();
+            // Filtrage par plage cote client
+            if (eventDate >= startDate && eventDate <= endDate) {
+                events.push({
+                    id: doc.id,
+                    ...data,
+                    date: eventDate
+                });
+            }
         });
 
         events.sort((a, b) => a.date - b.date);
 
+        console.log(`[Calendar] ${events.length} evenement(s) charge(s)`);
         renderCalendar();
         renderTimeline();
         checkUpcomingEvents();
     } catch (error) {
         console.error('[Calendar] Erreur chargement:', error);
-        // Afficher le calendrier quand meme (sans events)
         renderCalendar();
         renderTimeline();
     }
@@ -416,20 +421,24 @@ async function renderTimeline() {
     futureDate.setMonth(futureDate.getMonth() + 3);
 
     try {
-        // Query simple sans orderBy pour eviter l'erreur d'index composite
+        // Query simple sans filtres de date (evite index composite)
         const snapshot = await db.collection('events')
             .where('userId', '==', currentUserId)
-            .where('date', '>=', now)
-            .where('date', '<=', futureDate)
             .get();
 
         const upcomingEvents = [];
         snapshot.forEach(doc => {
-            upcomingEvents.push({
-                id: doc.id,
-                ...doc.data(),
-                date: doc.data().date.toDate()
-            });
+            const data = doc.data();
+            if (!data.date) return;
+            const eventDate = data.date.toDate();
+            // Filtrage cote client : entre maintenant et +3 mois
+            if (eventDate >= now && eventDate <= futureDate) {
+                upcomingEvents.push({
+                    id: doc.id,
+                    ...data,
+                    date: eventDate
+                });
+            }
         });
 
         // Tri cote client

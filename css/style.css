@@ -21,6 +21,7 @@ body {
     --glass-border: rgba(255, 255, 255, 0.08);
     --glass-border-hover: rgba(255, 255, 255, 0.15);
     font-family: 'Rajdhani', sans-serif;
+    color-scheme: dark;
     background: 
         radial-gradient(circle at 10% 20%, rgba(138, 43, 226, 0.15), transparent 40%),
         radial-gradient(circle at 90% 10%, rgba(0, 240, 255, 0.1), transparent 40%),

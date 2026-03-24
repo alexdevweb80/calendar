@@ -2815,3 +2815,919 @@ button:disabled {
     }
 }
 
+/* ──────────────────────────────────────────────
+   Responsive polish: lisibilite + coherence theme
+   ────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+    .dashboard-container {
+        padding: 16px 14px 180px;
+    }
+
+    .widgets-row {
+        flex-wrap: wrap;
+        gap: 14px;
+    }
+
+    .widget-card {
+        flex: 1 1 320px;
+        padding: 20px;
+    }
+
+    .rooms-list {
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 12px;
+    }
+
+    .room-full-calendar {
+        padding: 18px;
+    }
+
+    .room-calendar-grid {
+        gap: 5px;
+        grid-auto-rows: minmax(90px, auto);
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        line-height: 1.45;
+    }
+
+    .dashboard-header {
+        padding: 12px;
+        gap: 10px;
+    }
+
+    .dashboard-header h1 {
+        font-size: 1.08rem;
+        letter-spacing: 0.03em;
+    }
+
+    .user-info {
+        width: 100%;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .user-name {
+        font-size: 0.76rem;
+    }
+
+    .logout-button {
+        width: 100%;
+        padding: 9px 14px;
+    }
+
+    .rooms-container {
+        padding: 14px;
+    }
+
+    .rooms-header-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .rooms-header-actions .neon-button {
+        width: 100%;
+        padding: 11px 14px;
+        font-size: 0.88rem;
+        text-align: center;
+    }
+
+    .room-card {
+        padding: 16px;
+    }
+
+    .room-card-name {
+        font-size: 0.88rem;
+    }
+
+    .room-card-meta {
+        flex-wrap: wrap;
+        gap: 8px 12px;
+        font-size: 0.78rem;
+    }
+
+    .room-card-actions {
+        flex-wrap: wrap;
+    }
+
+    .room-card-actions .neon-button,
+    .room-card-actions .delete-button {
+        flex: 1 1 100%;
+        text-align: center;
+    }
+
+    .room-detail-header {
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .room-detail-header h3 {
+        font-size: 1rem;
+        line-height: 1.3;
+    }
+
+    .room-code-display {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    .room-code-value {
+        width: 100%;
+        text-align: center;
+        letter-spacing: 3px;
+        font-size: 1.1rem;
+        padding: 10px 8px;
+    }
+
+    .room-copy-btn {
+        width: 100%;
+    }
+
+    .widget-card {
+        padding: 16px;
+    }
+
+    .quote-header,
+    .weather-header {
+        gap: 8px;
+    }
+
+    .quote-header h3,
+    .weather-header h3 {
+        width: 100%;
+        font-size: 1rem;
+    }
+
+    .quote-text {
+        font-size: 1rem;
+        line-height: 1.6;
+        padding-left: 12px;
+    }
+
+    .weather-search {
+        width: 100%;
+    }
+
+    .weather-search .glass-input {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .room-cal-top-bar {
+        gap: 10px;
+    }
+
+    .room-cal-controls {
+        width: 100%;
+        justify-content: space-between;
+        gap: 8px;
+    }
+
+    .room-cal-month-title {
+        font-size: 1rem;
+        text-align: center;
+    }
+
+    .room-cal-actions {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .room-cal-actions .glass-input,
+    .room-cal-actions .nav-button {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .room-cal-today {
+        grid-column: 1 / -1;
+    }
+
+    .room-calendar-weekdays > div {
+        font-size: 0.66rem;
+        letter-spacing: 0.4px;
+    }
+
+    .room-calendar-grid {
+        gap: 4px;
+        grid-auto-rows: minmax(82px, auto);
+    }
+
+    .calendar-day {
+        padding: 6px;
+        border-radius: 8px;
+    }
+
+    .calendar-day .day-number {
+        font-size: 0.72rem;
+    }
+
+    .calendar-day .event-item {
+        font-size: 0.64rem;
+        line-height: 1.2;
+        padding: 3px 4px;
+    }
+
+    .room-members-legend {
+        gap: 8px 10px;
+    }
+
+    .room-legend-member {
+        font-size: 0.72rem;
+    }
+
+    .room-carousel-wrapper {
+        padding: 12px;
+    }
+
+    .room-carousel-controls {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .room-carousel-track .month-card {
+        min-width: 190px;
+    }
+
+    .room-day-panel {
+        padding: 14px;
+    }
+
+    .room-day-panel .day-panel-date {
+        font-size: 0.82rem;
+        line-height: 1.35;
+    }
+
+    .room-day-panel .day-panel-event-body {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+
+    .room-day-panel .day-panel-event-time {
+        font-size: 0.72rem;
+    }
+
+    .room-day-panel .day-panel-event-title {
+        font-size: 0.84rem;
+        line-height: 1.35;
+    }
+
+    .room-day-panel .day-panel-event-author,
+    .room-day-panel .day-panel-event-desc {
+        font-size: 0.72rem;
+        line-height: 1.35;
+    }
+
+    .room-day-panel .day-panel-event-actions {
+        margin-top: 4px;
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .room-timeline-section {
+        padding: 14px;
+    }
+
+    .room-timeline-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    .room-timeline-header h3 {
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .dashboard-container {
+        padding: 10px 8px 150px;
+    }
+
+    .room-calendar-grid {
+        grid-auto-rows: minmax(72px, auto);
+    }
+
+    .calendar-day .event-item {
+        display: none;
+    }
+
+    .calendar-day .event-more {
+        display: none;
+    }
+
+    .calendar-day.has-events::after {
+        width: 6px;
+        height: 6px;
+        top: 4px;
+        right: 4px;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 10px;
+    }
+
+    .rooms-header h2 {
+        font-size: 1rem;
+    }
+
+    .quote-cat-btn {
+        font-size: 0.74rem;
+        padding: 5px 10px;
+    }
+
+    .quote-text {
+        font-size: 0.94rem;
+    }
+
+    .weather-temp {
+        font-size: 2.15rem;
+    }
+
+    .weather-icon {
+        font-size: 2.4rem;
+    }
+
+    .room-full-calendar {
+        padding: 12px;
+    }
+
+    .room-cal-month-title {
+        font-size: 0.9rem;
+    }
+
+    .room-calendar-weekdays > div {
+        font-size: 0.6rem;
+    }
+
+    .room-calendar-grid {
+        grid-auto-rows: minmax(62px, auto);
+    }
+
+    .calendar-day {
+        min-height: 58px;
+        padding: 5px 4px;
+    }
+
+    .calendar-day .day-number {
+        font-size: 0.66rem;
+    }
+
+    .room-day-panel .day-panel-add,
+    .room-day-panel .day-panel-event-actions button {
+        min-height: 34px;
+    }
+
+    .room-carousel-track .month-card {
+        min-width: 170px;
+    }
+
+    .room-legend-member {
+        font-size: 0.68rem;
+    }
+}
+
+@media (max-width: 375px) {
+    .dashboard-header {
+        padding: 10px 8px;
+    }
+
+    .dashboard-header h1 {
+        font-size: 0.94rem;
+    }
+
+    .user-name {
+        width: 100%;
+        text-align: center;
+        font-size: 0.7rem;
+    }
+
+    .logout-button,
+    .rooms-header-actions .neon-button,
+    .room-card-actions .neon-button,
+    .room-card-actions .delete-button,
+    .modal-buttons .neon-button,
+    .modal-buttons .delete-button {
+        min-height: 40px;
+        font-size: 0.82rem;
+        padding: 9px 12px;
+    }
+
+    .rooms-container,
+    .widget-card,
+    .room-full-calendar,
+    .room-day-panel,
+    .room-timeline-section {
+        padding: 10px;
+        border-radius: 12px;
+    }
+
+    .rooms-header {
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+
+    .rooms-header h2 {
+        font-size: 0.92rem;
+    }
+
+    .room-card {
+        padding: 12px;
+    }
+
+    .room-card-header {
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+
+    .room-card-icon {
+        font-size: 1.35rem;
+    }
+
+    .room-card-name {
+        font-size: 0.8rem;
+    }
+
+    .room-card-meta {
+        gap: 6px 10px;
+        font-size: 0.72rem;
+        margin-bottom: 10px;
+    }
+
+    .room-detail-header h3 {
+        font-size: 0.9rem;
+    }
+
+    .room-code-value {
+        letter-spacing: 2px;
+        font-size: 0.95rem;
+    }
+
+    .quote-header h3,
+    .weather-header h3 {
+        font-size: 0.9rem;
+    }
+
+    .quote-cat-btn {
+        font-size: 0.68rem;
+        padding: 4px 8px;
+    }
+
+    .quote-text {
+        font-size: 0.88rem;
+        line-height: 1.5;
+    }
+
+    .quote-author {
+        font-size: 0.66rem;
+    }
+
+    .weather-main {
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .weather-temp {
+        font-size: 1.8rem;
+    }
+
+    .weather-icon {
+        font-size: 2rem;
+    }
+
+    .weather-extra {
+        gap: 10px;
+        font-size: 0.72rem;
+        flex-wrap: wrap;
+    }
+
+    .room-cal-controls .nav-button {
+        padding: 6px 10px;
+        font-size: 0.86rem;
+        min-height: 34px;
+    }
+
+    .room-cal-month-title {
+        font-size: 0.8rem;
+    }
+
+    .room-cal-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .room-cal-legend {
+        gap: 8px;
+        font-size: 0.68rem;
+    }
+
+    .room-calendar-weekdays > div {
+        font-size: 0.55rem;
+        padding: 4px 0;
+    }
+
+    .room-calendar-grid {
+        gap: 3px;
+        grid-auto-rows: minmax(56px, auto);
+    }
+
+    .calendar-day {
+        min-height: 54px;
+        padding: 4px 3px;
+    }
+
+    .calendar-day .day-number {
+        font-size: 0.6rem;
+    }
+
+    .calendar-day.has-events::after {
+        width: 5px;
+        height: 5px;
+        top: 3px;
+        right: 3px;
+    }
+
+    .room-members-legend {
+        gap: 6px 8px;
+        padding-top: 8px;
+        margin-top: 10px;
+    }
+
+    .room-legend-member {
+        font-size: 0.62rem;
+    }
+
+    .room-carousel-wrapper {
+        padding: 10px;
+        margin-top: 14px;
+    }
+
+    .room-carousel-title {
+        font-size: 0.82rem !important;
+    }
+
+    .room-carousel-year-label {
+        font-size: 0.82rem;
+    }
+
+    .room-carousel-track .month-card {
+        min-width: 150px;
+    }
+
+    .room-day-panel .day-panel-header {
+        margin-bottom: 10px;
+    }
+
+    .room-day-panel .day-panel-date {
+        font-size: 0.74rem;
+    }
+
+    .room-day-panel .day-panel-event {
+        margin-bottom: 6px;
+    }
+
+    .room-day-panel .day-panel-event-body {
+        padding: 8px;
+        gap: 5px;
+    }
+
+    .room-day-panel .day-panel-event-title {
+        font-size: 0.76rem;
+    }
+
+    .room-day-panel .day-panel-event-author,
+    .room-day-panel .day-panel-event-desc,
+    .room-day-panel .day-panel-event-time {
+        font-size: 0.66rem;
+    }
+
+    .room-day-panel .day-panel-edit,
+    .room-day-panel .day-panel-delete {
+        min-width: 30px;
+        min-height: 30px;
+        font-size: 0.78rem;
+        padding: 4px;
+    }
+
+    .room-timeline-header h3 {
+        font-size: 0.8rem;
+    }
+
+    .room-timeline-count {
+        font-size: 0.68rem;
+    }
+
+    .modal-content {
+        width: calc(100% - 12px);
+        padding: 14px;
+        border-radius: 12px;
+    }
+
+    .modal-content h3 {
+        font-size: 1rem;
+        line-height: 1.3;
+        margin-right: 26px;
+    }
+
+    .close-room-modal,
+    .close-join-modal,
+    .close-room-event-modal {
+        top: 8px;
+        right: 10px;
+        font-size: 24px;
+    }
+
+    .glass-input {
+        padding: 9px 11px;
+        font-size: 15px;
+    }
+}
+
+@media (max-width: 320px) {
+    .dashboard-container {
+        padding: 8px 6px 130px;
+    }
+
+    .dashboard-header h1 {
+        font-size: 0.86rem;
+    }
+
+    .rooms-header h2,
+    .quote-header h3,
+    .weather-header h3 {
+        font-size: 0.84rem;
+    }
+
+    .room-card-name {
+        font-size: 0.74rem;
+    }
+
+    .quote-text {
+        font-size: 0.82rem;
+    }
+
+    .weather-temp {
+        font-size: 1.55rem;
+    }
+
+    .room-cal-month-title {
+        font-size: 0.72rem;
+    }
+
+    .room-calendar-weekdays > div {
+        font-size: 0.5rem;
+    }
+
+    .room-calendar-grid {
+        grid-auto-rows: minmax(50px, auto);
+    }
+
+    .calendar-day {
+        min-height: 48px;
+    }
+
+    .calendar-day .day-number {
+        font-size: 0.56rem;
+    }
+
+    .room-carousel-track .month-card {
+        min-width: 140px;
+    }
+}
+
+/* ──────────────────────────────────────────────
+   Device pass (real-world targets)
+   iPhone SE / iPhone 12 mini / Galaxy A
+   ────────────────────────────────────────────── */
+
+/* iPhone SE (375x667 logical px in portrait) */
+@media (max-width: 375px) and (max-height: 667px) {
+    .dashboard-header {
+        padding: 8px 10px;
+    }
+
+    .dashboard-container {
+        padding: 8px 8px 112px;
+    }
+
+    .rooms-container,
+    .widget-card,
+    .room-full-calendar,
+    .room-day-panel,
+    .room-timeline-section {
+        padding: 10px;
+    }
+
+    .rooms-header {
+        margin-bottom: 10px;
+    }
+
+    .rooms-header-actions .neon-button,
+    .room-card-actions .neon-button,
+    .room-card-actions .delete-button,
+    .modal-buttons .neon-button,
+    .modal-buttons .delete-button,
+    .logout-button {
+        min-height: 40px;
+        padding: 9px 12px;
+        font-size: 0.82rem;
+    }
+
+    .room-card {
+        padding: 11px;
+    }
+
+    .quote-text {
+        font-size: 0.86rem;
+        line-height: 1.45;
+    }
+
+    .weather-main {
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+
+    .weather-temp {
+        font-size: 1.7rem;
+    }
+
+    .weather-icon {
+        font-size: 1.9rem;
+    }
+
+    .room-cal-controls .nav-button {
+        min-height: 34px;
+        padding: 6px 9px;
+        font-size: 0.82rem;
+    }
+
+    .room-calendar-grid {
+        grid-auto-rows: minmax(52px, auto);
+    }
+
+    .calendar-day {
+        min-height: 50px;
+        padding: 4px 3px;
+    }
+
+    .room-day-panel .day-panel-event-body {
+        padding: 7px;
+        gap: 4px;
+    }
+
+    .modal-content {
+        width: calc(100% - 10px);
+        max-height: 88vh;
+        padding: 12px;
+    }
+}
+
+/* iPhone 12 mini (375x812 logical px in portrait) */
+@media (min-width: 375px) and (max-width: 390px) and (min-height: 780px) and (max-height: 844px) {
+    .dashboard-header {
+        padding-top: calc(10px + env(safe-area-inset-top));
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .dashboard-container {
+        padding: 10px 10px calc(130px + env(safe-area-inset-bottom));
+    }
+
+    .rooms-container,
+    .widget-card,
+    .room-full-calendar,
+    .room-day-panel,
+    .room-timeline-section {
+        padding: 12px;
+    }
+
+    .rooms-header-actions .neon-button,
+    .room-card-actions .neon-button,
+    .room-card-actions .delete-button,
+    .modal-buttons .neon-button,
+    .modal-buttons .delete-button,
+    .logout-button {
+        min-height: 42px;
+        font-size: 0.84rem;
+    }
+
+    .quote-text {
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    .weather-temp {
+        font-size: 1.95rem;
+    }
+
+    .weather-icon {
+        font-size: 2.15rem;
+    }
+
+    .room-cal-controls .nav-button {
+        min-height: 36px;
+        padding: 7px 10px;
+    }
+
+    .room-calendar-grid {
+        grid-auto-rows: minmax(58px, auto);
+    }
+
+    .calendar-day {
+        min-height: 56px;
+    }
+
+    .modal-content {
+        max-height: calc(92vh - env(safe-area-inset-top));
+    }
+}
+
+/* Galaxy A class (360x800, 360x780, 412x915 in portrait) */
+@media (min-width: 360px) and (max-width: 412px) and (min-height: 740px) {
+    .dashboard-header {
+        padding: 10px 12px;
+    }
+
+    .dashboard-container {
+        padding: 10px 10px 124px;
+    }
+
+    .rooms-container,
+    .widget-card,
+    .room-full-calendar,
+    .room-day-panel,
+    .room-timeline-section {
+        padding: 12px;
+    }
+
+    .rooms-header h2 {
+        font-size: 0.96rem;
+    }
+
+    .rooms-header-actions .neon-button,
+    .room-card-actions .neon-button,
+    .room-card-actions .delete-button,
+    .modal-buttons .neon-button,
+    .modal-buttons .delete-button,
+    .logout-button {
+        min-height: 42px;
+        font-size: 0.86rem;
+        padding: 10px 12px;
+    }
+
+    .room-card {
+        padding: 12px;
+    }
+
+    .room-card-meta {
+        font-size: 0.74rem;
+    }
+
+    .quote-text {
+        font-size: 0.9rem;
+    }
+
+    .weather-temp {
+        font-size: 2rem;
+    }
+
+    .room-cal-month-title {
+        font-size: 0.86rem;
+    }
+
+    .room-cal-controls .nav-button {
+        min-height: 36px;
+        padding: 7px 10px;
+        font-size: 0.85rem;
+    }
+
+    .room-calendar-grid {
+        grid-auto-rows: minmax(60px, auto);
+    }
+
+    .calendar-day {
+        min-height: 58px;
+    }
+
+    .room-day-panel .day-panel-event-title {
+        font-size: 0.78rem;
+    }
+
+    .room-day-panel .day-panel-edit,
+    .room-day-panel .day-panel-delete {
+        min-width: 32px;
+        min-height: 32px;
+    }
+}
+

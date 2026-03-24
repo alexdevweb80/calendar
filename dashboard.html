@@ -17,43 +17,19 @@
         </div>
     </div>
     
-    <!-- Onglets -->
-    <div class="tabs-bar">
-        <button class="tab-btn active" data-tab="calendar">📅 Calendrier</button>
-        <button class="tab-btn" data-tab="rooms">👥 Salons</button>
-    </div>
-
     <div class="dashboard-container">
 
-        <!-- ═══ ONGLET CALENDRIER ═══ -->
-        <div id="tab-calendar" class="tab-content active">
-        <div class="glass-card calendar-container">
-            <div class="calendar-header">
-                <div class="calendar-controls">
-                    <button id="prevMonth" class="nav-button" aria-label="Mois précédent">◀</button>
-                    <h2 id="currentMonthYear" class="month-title"></h2>
-                    <button id="nextMonth" class="nav-button" aria-label="Mois suivant">▶</button>
-                </div>
-                <div class="calendar-actions">
-                    <button id="todayBtn" class="nav-button today-button">Aujourd'hui</button>
-                    <select id="yearRangePicker" class="glass-input year-picker" aria-label="Choisir une annee"></select>
-                    <input type="month" id="monthPicker" class="glass-input month-picker" aria-label="Choisir un mois">
+        <!-- ═══ SALONS PRIVES ═══ -->
+        <div class="glass-card rooms-container">
+            <div class="rooms-header">
+                <h2 class="neon-text">👥 Mes salons</h2>
+                <div class="rooms-header-actions">
+                    <button id="openJoinRoomBtn" class="neon-button neon-button-secondary" type="button">🔑 Rejoindre un salon</button>
+                    <button id="openCreateRoomBtn" class="neon-button" type="button">+ Creer un salon</button>
                 </div>
             </div>
-
-            <div class="calendar-legend">
-                <span><i class="legend-dot rdv"></i> Rendez-vous</span>
-                <span><i class="legend-dot reunion"></i> Réunion</span>
-                <span><i class="legend-dot fete"></i> Fête</span>
-                <span><i class="legend-dot anniversaire"></i> Anniversaire</span>
-                <span><i class="legend-dot other"></i> Autre</span>
-            </div>
-            
-            <div class="calendar-weekdays">
-                <div>Lun</div><div>Mar</div><div>Mer</div><div>Jeu</div><div>Ven</div><div>Sam</div><div>Dim</div>
-            </div>
-            
-            <div id="calendarGrid" class="calendar-grid"></div>
+            <div id="roomsList" class="rooms-list"></div>
+            <div id="roomDetailPanel" class="room-detail-panel" style="display:none;"></div>
         </div>
 
         <!-- Widgets: Citation + Meteo -->
@@ -89,81 +65,6 @@
             </div>
         </div>
 
-        <div class="glass-card month-carousel-wrapper">
-            <div class="month-carousel-header">
-                <h3 class="neon-text month-carousel-title">Carrousel annuel</h3>
-                <div class="month-carousel-controls">
-                    <button id="prevYear" class="nav-button" aria-label="Annee precedente">◀ Annee</button>
-                    <span id="carouselYearLabel" class="carousel-year-label"></span>
-                    <button id="nextYear" class="nav-button" aria-label="Annee suivante">Annee ▶</button>
-                </div>
-            </div>
-            <div id="monthCarouselTrack" class="month-carousel-track"></div>
-        </div>
-        </div><!-- fin tab-calendar -->
-
-        <!-- ═══ ONGLET SALONS ═══ -->
-        <div id="tab-rooms" class="tab-content">
-            <div class="glass-card rooms-container">
-                <div class="rooms-header">
-                    <h2 class="neon-text">👥 Mes salons</h2>
-                    <div class="rooms-header-actions">
-                        <button id="openJoinRoomBtn" class="neon-button neon-button-secondary" type="button">🔑 Rejoindre un salon</button>
-                        <button id="openCreateRoomBtn" class="neon-button" type="button">+ Creer un salon</button>
-                    </div>
-                </div>
-                <div id="roomsList" class="rooms-list"></div>
-                <div id="roomDetailPanel" class="room-detail-panel" style="display:none;"></div>
-            </div>
-        </div><!-- fin tab-rooms -->
-
-    </div>
-    
-    <!-- Panneau detail du jour -->
-    <div id="dayPanel" class="day-panel glass-card"></div>
-
-    <!-- Modal de création d'événement -->
-    <div id="eventModal" class="modal" style="display: none;">
-        <div class="modal-content glass-card">
-            <span class="close-modal">&times;</span>
-            <h3 class="neon-text" id="modalTitle">Nouvel événement</h3>
-            
-            <form id="eventForm">
-                <input type="hidden" id="eventDate">
-                <input type="hidden" id="eventId">
-                
-                <div class="input-group">
-                    <label>Titre</label>
-                    <input type="text" id="eventTitle" class="glass-input" required>
-                </div>
-                
-                <div class="input-group">
-                    <label>Type</label>
-                    <select id="eventType" class="glass-input">
-                        <option value="rdv">📅 Rendez-vous</option>
-                        <option value="fete">🎉 Fête</option>
-                        <option value="reunion">💼 Réunion</option>
-                        <option value="anniversaire">🎂 Anniversaire</option>
-                        <option value="other">📝 Autre</option>
-                    </select>
-                </div>
-                
-                <div class="input-group">
-                    <label>Heure</label>
-                    <input type="time" id="eventTime" class="glass-input">
-                </div>
-                
-                <div class="input-group">
-                    <label>Description</label>
-                    <textarea id="eventDescription" class="glass-input" rows="3"></textarea>
-                </div>
-                
-                <div class="modal-buttons">
-                    <button type="submit" class="neon-button">Enregistrer</button>
-                    <button type="button" id="deleteEventBtn" class="delete-button" style="display: none;">Supprimer</button>
-                </div>
-            </form>
-        </div>
     </div>
     
     <!-- Modal creation de salon -->
@@ -217,21 +118,51 @@
         </div>
     </div>
 
-    <!-- Frise chronologique -->
-    <div class="timeline-container glass-card">
-        <div class="timeline-header">
-            <h3>📋 Événements à venir</h3>
-            <span class="timeline-count" id="eventCount">0 événement</span>
+    <!-- Modal événement de salon -->
+    <div id="roomEventModal" class="modal" style="display: none;">
+        <div class="modal-content glass-card">
+            <span class="close-room-event-modal">&times;</span>
+            <h3 class="neon-text" id="roomEventModalTitle">Nouvel événement du salon</h3>
+            <form id="roomEventForm">
+                <input type="hidden" id="roomEventDate">
+                <input type="hidden" id="roomEventId">
+                <input type="hidden" id="roomEventRoomId">
+                <div class="input-group">
+                    <label>Titre</label>
+                    <input type="text" id="roomEventTitle" class="glass-input" required>
+                </div>
+                <div class="input-group">
+                    <label>Type</label>
+                    <select id="roomEventType" class="glass-input">
+                        <option value="rdv">📅 Rendez-vous</option>
+                        <option value="fete">🎉 Fête</option>
+                        <option value="reunion">💼 Réunion</option>
+                        <option value="anniversaire">🎂 Anniversaire</option>
+                        <option value="other">📝 Autre</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Heure</label>
+                    <input type="time" id="roomEventTime" class="glass-input">
+                </div>
+                <div class="input-group">
+                    <label>Description</label>
+                    <textarea id="roomEventDescription" class="glass-input" rows="3"></textarea>
+                </div>
+                <div class="modal-buttons">
+                    <button type="submit" class="neon-button">Enregistrer</button>
+                    <button type="button" id="deleteRoomEventBtn" class="delete-button" style="display: none;">Supprimer</button>
+                </div>
+            </form>
         </div>
-        <div id="timeline" class="timeline"></div>
     </div>
-    
+
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
     <script src="js/firebase-config.js"></script>
+    <script src="js/sounds.js"></script>
     <script src="js/auth.js"></script>
-    <script src="js/calendar.js"></script>
     <script src="js/rooms.js"></script>
     <script src="js/widgets.js"></script>
 </body>

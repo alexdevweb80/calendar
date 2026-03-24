@@ -64,7 +64,9 @@ if (loginForm) {
             console.log('[Auth] Tentative de connexion:', email);
             await auth.signInWithEmailAndPassword(email, password);
             console.log('[Auth] Connexion reussie');
-            window.location.href = 'dashboard.html';
+            // Son de connexion
+            if (typeof ChronosSounds !== 'undefined') ChronosSounds.playLogin();
+            setTimeout(() => { window.location.href = 'dashboard.html'; }, 600);
         } catch (error) {
             console.error('[Auth] Echec connexion:', error.code, error.message);
             afficherErreur(errorDiv, traduireErreur(error.code));

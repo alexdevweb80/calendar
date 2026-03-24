@@ -3,6 +3,41 @@
 // ──────────────────────────────────────────────
 let rooms = [];
 let currentRoomId = null;
+let currentUserId = null;
+
+// ── Room Calendar State ──
+const YEAR_START = 2026;
+const YEAR_END = 2055;
+let roomCalendarDate = new Date();
+let roomEvents = [];
+let selectedRoomDay = null;
+let currentOpenRoom = null;
+const roomMonthNames = ['Janvier', 'Fevrier', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Aout', 'Septembre', 'Octobre', 'Novembre', 'Decembre'];
+
+if (roomCalendarDate.getFullYear() < YEAR_START || roomCalendarDate.getFullYear() > YEAR_END) {
+    roomCalendarDate = new Date(YEAR_START, 0, 1);
+}
+
+// ──────────────────────────────────────────────
+// Alerte visuelle
+// ──────────────────────────────────────────────
+function showAlert(message) {
+    const alertContainer = document.getElementById('alertContainer');
+    if (!alertContainer) return;
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert';
+    alertDiv.textContent = message;
+    alertContainer.appendChild(alertDiv);
+    // Son de notification (sauf si un son specifique vient d'etre joue)
+    if (typeof ChronosSounds !== 'undefined') {
+        if (ChronosSounds._skipNextNotification) {
+            ChronosSounds._skipNextNotification = false;
+        } else {
+            ChronosSounds.playNotification();
+        }
+    }
+    setTimeout(() => alertDiv.remove(), 5000);
+}
 
 // ──────────────────────────────────────────────
 // Hachage du mot de passe (SHA-256)
@@ -107,7 +142,7 @@ function renderRoomsList() {
 
         card.innerHTML = `
             <div class="room-card-header">
-                <span class="room-card-icon">${room.icon || '👥'}</span>
+                <span class="room-card-icon">${escapeHtml(room.icon || '👥')}</span>
                 <h4 class="room-card-name">${escapeHtml(room.name)}</h4>
                 <span class="room-badge lock">🔒</span>
                 ${isCreator ? '<span class="room-badge creator">Admin</span>' : '<span class="room-badge member">Membre</span>'}
@@ -153,6 +188,12 @@ function renderRoomsList() {
 // ──────────────────────────────────────────────
 async function openRoomDetail(room) {
     currentRoomId = room.id;
+    currentOpenRoom = room;
+    roomCalendarDate = new Date();
+    if (roomCalendarDate.getFullYear() < YEAR_START || roomCalendarDate.getFullYear() > YEAR_END) {
+        roomCalendarDate = new Date(YEAR_START, 0, 1);
+    }
+    selectedRoomDay = null;
     const panel = document.getElementById('roomDetailPanel');
     if (!panel) return;
 
@@ -173,13 +214,27 @@ async function openRoomDetail(room) {
         `;
     });
 
+    // Legende des couleurs membres
+    let legendHtml = '';
+    members.forEach(m => {
+        const color = getMemberColor(m.uid);
+        legendHtml += `<span class="room-legend-member"><span class="room-legend-dot" style="background:${color};"></span>${escapeHtml(m.name || m.email)}</span>`;
+    });
+
     const roomCode = room.roomCode || '—';
+
+    // Generer les options d'annees
+    let yearOptionsHtml = '';
+    for (let y = YEAR_START; y <= YEAR_END; y++) {
+        yearOptionsHtml += `<option value="${y}">${y}</option>`;
+    }
 
     panel.innerHTML = `
         <div class="room-detail-header">
             <button class="room-back-btn" type="button">◀ Retour</button>
-            <h3 class="neon-text">${room.icon || '👥'} ${escapeHtml(room.name)}</h3>
+            <h3 class="neon-text">${escapeHtml(room.icon || '👥')} ${escapeHtml(room.name)}</h3>
         </div>
+
         ${isCreator ? `
         <div class="room-detail-section room-code-section">
             <h4>🔑 Code d'acces</h4>
@@ -190,6 +245,7 @@ async function openRoomDetail(room) {
             <p class="room-code-hint">Partagez ce code + le mot de passe pour inviter des participants</p>
         </div>
         ` : ''}
+
         <div class="room-detail-section">
             <h4>Participants (${members.length})</h4>
             <div class="room-members-list">
@@ -202,12 +258,70 @@ async function openRoomDetail(room) {
             </div>
             ` : ''}
         </div>
+
+        <!-- ═══ CALENDRIER COMPLET DU SALON ═══ -->
+        <div class="room-detail-section room-calendar-section">
+            <div class="room-full-calendar">
+                <div class="room-cal-top-bar">
+                    <div class="room-cal-controls">
+                        <button class="nav-button room-cal-prev" type="button" aria-label="Mois precedent">◀</button>
+                        <h2 class="room-cal-month-title" id="roomCalMonthTitle"></h2>
+                        <button class="nav-button room-cal-next" type="button" aria-label="Mois suivant">▶</button>
+                    </div>
+                    <div class="room-cal-actions">
+                        <button class="nav-button room-cal-today" type="button">Aujourd'hui</button>
+                        <select id="roomYearPicker" class="glass-input year-picker">${yearOptionsHtml}</select>
+                        <input type="month" id="roomMonthPicker" class="glass-input month-picker" min="${YEAR_START}-01" max="${YEAR_END}-12">
+                    </div>
+                </div>
+
+                <div class="room-cal-legend">
+                    <span><i class="legend-dot rdv"></i> RDV</span>
+                    <span><i class="legend-dot reunion"></i> Reunion</span>
+                    <span><i class="legend-dot fete"></i> Fete</span>
+                    <span><i class="legend-dot anniversaire"></i> Anniversaire</span>
+                    <span><i class="legend-dot other"></i> Autre</span>
+                </div>
+
+                <div class="room-calendar-weekdays">
+                    <div>Lun</div><div>Mar</div><div>Mer</div><div>Jeu</div><div>Ven</div><div>Sam</div><div>Dim</div>
+                </div>
+                <div class="room-calendar-grid" id="roomCalendarGrid"></div>
+
+                <!-- Legende membres -->
+                <div class="room-members-legend">${legendHtml}</div>
+
+                <!-- Carrousel annuel -->
+                <div class="room-carousel-wrapper">
+                    <div class="room-carousel-header">
+                        <h3 class="neon-text room-carousel-title">Carrousel annuel</h3>
+                        <div class="room-carousel-controls">
+                            <button class="nav-button room-carousel-prev-year" type="button">◀ Annee</button>
+                            <span class="room-carousel-year-label" id="roomCarouselYearLabel"></span>
+                            <button class="nav-button room-carousel-next-year" type="button">Annee ▶</button>
+                        </div>
+                    </div>
+                    <div class="room-carousel-track" id="roomCarouselTrack"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panneau du jour (inline) -->
+        <div class="room-day-panel" id="roomDayPanel" style="display:none;"></div>
+
+        <!-- Timeline evenements a venir -->
+        <div class="room-timeline-section">
+            <div class="room-timeline-header">
+                <h3>📋 Evenements a venir</h3>
+                <span class="room-timeline-count" id="roomEventCount">0 evenement</span>
+            </div>
+            <div id="roomTimeline" class="room-timeline"></div>
+        </div>
     `;
 
-    // Listeners
+    // ── Listeners ──
     panel.querySelector('.room-back-btn')?.addEventListener('click', closeRoomDetail);
 
-    // Copier le code
     panel.querySelector('.room-copy-btn')?.addEventListener('click', () => {
         const code = document.getElementById('roomCodeValue')?.textContent;
         if (code && navigator.clipboard) {
@@ -215,14 +329,11 @@ async function openRoomDetail(room) {
         }
     });
 
-    // Invite
     panel.querySelector('#inviteBtn')?.addEventListener('click', () => inviteParticipant(room));
-
     panel.querySelector('#inviteEmail')?.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') { e.preventDefault(); inviteParticipant(room); }
     });
 
-    // Kick
     panel.querySelectorAll('.room-kick-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
             const uid = btn.dataset.uid;
@@ -232,10 +343,76 @@ async function openRoomDetail(room) {
         });
     });
 
+    // Calendar navigation (avec clamping de la plage d'annees)
+    panel.querySelector('.room-cal-prev')?.addEventListener('click', () => {
+        roomCalendarDate.setMonth(roomCalendarDate.getMonth() - 1);
+        if (roomCalendarDate.getFullYear() < YEAR_START) {
+            roomCalendarDate = new Date(YEAR_START, 0, 1);
+            showAlert(`Plage: ${YEAR_START} - ${YEAR_END}`);
+        }
+        loadRoomEvents(room.id);
+    });
+    panel.querySelector('.room-cal-next')?.addEventListener('click', () => {
+        roomCalendarDate.setMonth(roomCalendarDate.getMonth() + 1);
+        if (roomCalendarDate.getFullYear() > YEAR_END) {
+            roomCalendarDate = new Date(YEAR_END, 11, 1);
+            showAlert(`Plage: ${YEAR_START} - ${YEAR_END}`);
+        }
+        loadRoomEvents(room.id);
+    });
+    panel.querySelector('.room-cal-today')?.addEventListener('click', () => {
+        const now = new Date();
+        roomCalendarDate = new Date(Math.max(YEAR_START, Math.min(YEAR_END, now.getFullYear())), now.getMonth(), 1);
+        selectedRoomDay = null;
+        hideRoomDayPanel();
+        loadRoomEvents(room.id);
+    });
+
+    document.getElementById('roomYearPicker')?.addEventListener('change', (e) => {
+        const year = Number(e.target.value);
+        if (!Number.isNaN(year)) {
+            roomCalendarDate = new Date(year, roomCalendarDate.getMonth(), 1);
+            hideRoomDayPanel();
+            loadRoomEvents(room.id);
+        }
+    });
+
+    document.getElementById('roomMonthPicker')?.addEventListener('change', (e) => {
+        const val = e.target.value;
+        if (!val) return;
+        const [y, m] = val.split('-').map(Number);
+        const safeYear = Math.max(YEAR_START, Math.min(YEAR_END, y));
+        roomCalendarDate = new Date(safeYear, m - 1, 1);
+        hideRoomDayPanel();
+        loadRoomEvents(room.id);
+    });
+
+    // Carousel year nav
+    panel.querySelector('.room-carousel-prev-year')?.addEventListener('click', () => {
+        if (roomCalendarDate.getFullYear() <= YEAR_START) { showAlert(`Plage: ${YEAR_START} - ${YEAR_END}`); return; }
+        roomCalendarDate.setFullYear(roomCalendarDate.getFullYear() - 1);
+        hideRoomDayPanel();
+        loadRoomEvents(room.id);
+    });
+    panel.querySelector('.room-carousel-next-year')?.addEventListener('click', () => {
+        if (roomCalendarDate.getFullYear() >= YEAR_END) { showAlert(`Plage: ${YEAR_START} - ${YEAR_END}`); return; }
+        roomCalendarDate.setFullYear(roomCalendarDate.getFullYear() + 1);
+        hideRoomDayPanel();
+        loadRoomEvents(room.id);
+    });
+
     // Afficher le panel
     document.getElementById('roomsList').style.display = 'none';
     document.querySelector('.rooms-header-actions')?.classList.add('hidden');
     panel.style.display = 'block';
+
+    // Rendu initial immediat (grille vide + carrousel + timeline)
+    renderRoomCalendar();
+    renderRoomCarousel();
+    renderRoomTimeline();
+
+    // Charger les evenements du salon (re-render avec donnees)
+    await loadRoomEvents(room.id);
 }
 
 function closeRoomDetail() {
@@ -244,6 +421,489 @@ function closeRoomDetail() {
     document.getElementById('roomsList').style.display = '';
     document.querySelector('.rooms-header-actions')?.classList.remove('hidden');
     currentRoomId = null;
+    currentOpenRoom = null;
+    roomEvents = [];
+    selectedRoomDay = null;
+}
+
+// ──────────────────────────────────────────────
+// Calendrier complet du salon
+// ──────────────────────────────────────────────
+async function loadRoomEvents(roomId) {
+    if (!roomId) return;
+
+    try {
+        console.log('[Rooms] Chargement evenements pour roomId:', roomId);
+        const snapshot = await db.collection('events')
+            .where('roomId', '==', roomId)
+            .get();
+
+        console.log('[Rooms] Snapshot recu, docs:', snapshot.size);
+        roomEvents = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            if (!data.date) { console.warn('[Rooms] Event sans date:', doc.id); return; }
+
+            // Gerer tous les formats de date possibles
+            let eventDate;
+            if (typeof data.date.toDate === 'function') {
+                eventDate = data.date.toDate();
+            } else if (data.date instanceof Date) {
+                eventDate = data.date;
+            } else if (typeof data.date === 'string') {
+                eventDate = new Date(data.date);
+            } else if (typeof data.date === 'number') {
+                eventDate = new Date(data.date);
+            } else {
+                console.warn('[Rooms] Format de date inconnu pour event:', doc.id, data.date);
+                return;
+            }
+
+            if (isNaN(eventDate.getTime())) {
+                console.warn('[Rooms] Date invalide pour event:', doc.id, data.date);
+                return;
+            }
+
+            roomEvents.push({
+                id: doc.id,
+                ...data,
+                date: eventDate
+            });
+        });
+
+        roomEvents.sort((a, b) => a.date - b.date);
+        console.log(`[Rooms] ${roomEvents.length} evenement(s) du salon charge(s)`);
+    } catch (error) {
+        console.error('[Rooms] Erreur chargement evenements salon:', error);
+        showAlert('Erreur chargement evenements: ' + error.message);
+        roomEvents = [];
+    }
+
+    // Toujours rendre le calendrier, meme si le chargement echoue
+    console.log('[Rooms] Rendu calendrier avec', roomEvents.length, 'evenement(s)');
+    renderRoomCalendar();
+    renderRoomCarousel();
+    renderRoomTimeline();
+    if (selectedRoomDay) {
+        renderRoomDayPanel(selectedRoomDay);
+    }
+}
+
+function getRoomCalendarGridBounds(baseDate) {
+    const year = baseDate.getFullYear();
+    const month = baseDate.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const firstWeekday = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+    const startDate = new Date(year, month, 1 - firstWeekday);
+    const endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + 41);
+    return { startDate, endDate };
+}
+
+function getRoomEventsForDate(date) {
+    return roomEvents.filter(ev => ev.date.toDateString() === date.toDateString());
+}
+
+function getMemberColor(uid) {
+    const colors = ['#00f6ff', '#ff2dbf', '#5a7bff', '#b44aff', '#39ff14', '#ffd700', '#ff6b35', '#ff4757'];
+    if (!uid) return colors[0];
+    let hash = 0;
+    for (let i = 0; i < uid.length; i++) {
+        hash = ((hash << 5) - hash + uid.charCodeAt(i)) | 0;
+    }
+    return colors[Math.abs(hash) % colors.length];
+}
+
+function getMemberName(uid) {
+    if (!currentOpenRoom) return 'Inconnu';
+    const member = (currentOpenRoom.members || []).find(m => m.uid === uid);
+    return member ? (member.name || member.email) : 'Inconnu';
+}
+
+function renderRoomCalendar() {
+    const grid = document.getElementById('roomCalendarGrid');
+    const titleEl = document.getElementById('roomCalMonthTitle');
+    if (!grid || !titleEl) return;
+
+    const year = roomCalendarDate.getFullYear();
+    const month = roomCalendarDate.getMonth();
+    titleEl.textContent = `${roomMonthNames[month]} ${year}`;
+
+    // Sync pickers
+    const monthPicker = document.getElementById('roomMonthPicker');
+    if (monthPicker) monthPicker.value = `${year}-${String(month + 1).padStart(2, '0')}`;
+    const yearPicker = document.getElementById('roomYearPicker');
+    if (yearPicker) yearPicker.value = String(year);
+
+    const { startDate } = getRoomCalendarGridBounds(roomCalendarDate);
+    grid.innerHTML = '';
+
+    for (let i = 0; i < 42; i++) {
+        const cellDate = new Date(startDate);
+        cellDate.setDate(startDate.getDate() + i);
+
+        const isCurrentMonth = cellDate.getMonth() === month;
+        const isWeekend = cellDate.getDay() === 0 || cellDate.getDay() === 6;
+        const isToday = new Date().toDateString() === cellDate.toDateString();
+        const isSelected = selectedRoomDay && cellDate.toDateString() === selectedRoomDay.toDateString();
+        const dayEvents = getRoomEventsForDate(cellDate);
+
+        const dayDiv = document.createElement('div');
+        dayDiv.className = [
+            'calendar-day',
+            isToday ? 'today' : '',
+            isCurrentMonth ? '' : 'other-month',
+            isWeekend ? 'weekend' : '',
+            isSelected ? 'selected' : '',
+            dayEvents.length > 0 ? 'has-events' : ''
+        ].filter(Boolean).join(' ');
+
+        dayDiv.style.animationDelay = `${i * 15}ms`;
+        dayDiv.setAttribute('tabindex', '0');
+        dayDiv.setAttribute('role', 'button');
+        dayDiv.setAttribute('aria-label', `${cellDate.getDate()} ${roomMonthNames[cellDate.getMonth()]} ${cellDate.getFullYear()} - ${dayEvents.length} evenement(s)`);
+
+        const dateCopy = new Date(cellDate);
+        dayDiv.addEventListener('click', () => selectRoomDay(dateCopy));
+        dayDiv.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectRoomDay(dateCopy); }
+        });
+
+        // Numero du jour
+        const dayNumber = document.createElement('div');
+        dayNumber.className = 'day-number';
+        dayNumber.textContent = cellDate.getDate();
+        dayDiv.appendChild(dayNumber);
+
+        // Evenements visibles (max 3) avec couleur membre
+        dayEvents.slice(0, 3).forEach(event => {
+            const eventDiv = document.createElement('div');
+            eventDiv.className = `event-item ${event.type}`;
+            eventDiv.style.borderLeft = `3px solid ${getMemberColor(event.userId)}`;
+            eventDiv.textContent = event.title;
+            eventDiv.title = `${event.title} — ${getMemberName(event.userId)} — ${event.date.toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' })}`;
+            eventDiv.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (event.userId === currentUserId) {
+                    editRoomEvent(event);
+                } else {
+                    selectRoomDay(dateCopy);
+                }
+            });
+            dayDiv.appendChild(eventDiv);
+        });
+
+        if (dayEvents.length > 3) {
+            const moreDiv = document.createElement('div');
+            moreDiv.className = 'event-more';
+            moreDiv.textContent = `+${dayEvents.length - 3} autres`;
+            dayDiv.appendChild(moreDiv);
+        }
+
+        grid.appendChild(dayDiv);
+    }
+}
+
+// ──────────────────────────────────────────────
+// Selection du jour + panneau detail
+// ──────────────────────────────────────────────
+function selectRoomDay(date) {
+    selectedRoomDay = date;
+
+    // Mettre a jour .selected
+    document.querySelectorAll('#roomCalendarGrid .calendar-day.selected').forEach(el => el.classList.remove('selected'));
+    const grid = document.getElementById('roomCalendarGrid');
+    const { startDate } = getRoomCalendarGridBounds(roomCalendarDate);
+    const dayIndex = Math.round((date - startDate) / (1000 * 60 * 60 * 24));
+    if (dayIndex >= 0 && dayIndex < 42 && grid.children[dayIndex]) {
+        grid.children[dayIndex].classList.add('selected');
+    }
+
+    renderRoomDayPanel(date);
+    showRoomDayPanel();
+}
+
+function renderRoomDayPanel(date) {
+    const panel = document.getElementById('roomDayPanel');
+    if (!panel) return;
+
+    const dayEvents = getRoomEventsForDate(date);
+    const formattedDate = date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+    let html = `
+        <div class="day-panel-header">
+            <h3 class="day-panel-date">${formattedDate}</h3>
+            <button class="close-day-panel" aria-label="Fermer">&times;</button>
+        </div>
+        <button class="neon-button day-panel-add" type="button">+ Ajouter un evenement</button>
+    `;
+
+    if (dayEvents.length === 0) {
+        html += `<div class="day-panel-empty">Aucun evenement ce jour</div>`;
+    } else {
+        html += `<div class="day-panel-events">`;
+        dayEvents.forEach(event => {
+            const time = event.date.toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' });
+            const memberName = getMemberName(event.userId);
+            const memberColor = getMemberColor(event.userId);
+            const isOwner = event.userId === currentUserId;
+            html += `
+                <div class="day-panel-event ${event.type}" data-event-id="${event.id}">
+                    <div class="room-event-member-bar" style="background:${memberColor};"></div>
+                    <div class="day-panel-event-body">
+                        <div class="day-panel-event-time">${time}</div>
+                        <div class="day-panel-event-info">
+                            <div class="day-panel-event-title">${escapeHtml(event.title)}</div>
+                            <div class="day-panel-event-author" style="color:${memberColor};">${escapeHtml(memberName)}</div>
+                            ${event.description ? `<div class="day-panel-event-desc">${escapeHtml(event.description)}</div>` : ''}
+                        </div>
+                        ${isOwner ? `
+                        <div class="day-panel-event-actions">
+                            <button class="day-panel-edit" data-event-id="${event.id}" title="Modifier">✏️</button>
+                            <button class="day-panel-delete" data-event-id="${event.id}" title="Supprimer">🗑️</button>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        });
+        html += `</div>`;
+    }
+
+    panel.innerHTML = html;
+
+    // Bouton ajouter
+    panel.querySelector('.day-panel-add')?.addEventListener('click', () => openRoomEventModal(date));
+
+    // Fermer
+    panel.querySelector('.close-day-panel')?.addEventListener('click', hideRoomDayPanel);
+
+    // Modifier
+    panel.querySelectorAll('.day-panel-edit').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const ev = roomEvents.find(e => e.id === btn.dataset.eventId);
+            if (ev) editRoomEvent(ev);
+        });
+    });
+
+    // Supprimer
+    panel.querySelectorAll('.day-panel-delete').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const eventId = btn.dataset.eventId;
+            console.log('[Rooms] Suppression day-panel, eventId:', eventId);
+            if (!eventId) { showAlert('Erreur: aucun evenement selectionne'); return; }
+            if (confirm('Supprimer cet evenement du salon ?')) {
+                try {
+                    await db.collection('events').doc(eventId).delete();
+                    showAlert('Evenement supprime !');
+                    await loadRoomEvents(currentRoomId);
+                } catch (err) {
+                    console.error('[Rooms] Erreur suppression:', err);
+                    showAlert('Erreur suppression: ' + err.message);
+                }
+            }
+        });
+    });
+}
+
+function showRoomDayPanel() {
+    const panel = document.getElementById('roomDayPanel');
+    if (panel) { panel.style.display = 'block'; panel.classList.add('visible'); }
+}
+
+function hideRoomDayPanel() {
+    const panel = document.getElementById('roomDayPanel');
+    if (panel) { panel.classList.remove('visible'); panel.style.display = 'none'; }
+    selectedRoomDay = null;
+    document.querySelectorAll('#roomCalendarGrid .calendar-day.selected').forEach(el => el.classList.remove('selected'));
+}
+
+// ──────────────────────────────────────────────
+// Carrousel annuel du salon
+// ──────────────────────────────────────────────
+function renderRoomCarousel() {
+    const track = document.getElementById('roomCarouselTrack');
+    const yearLabel = document.getElementById('roomCarouselYearLabel');
+    if (!track) return;
+
+    const year = roomCalendarDate.getFullYear();
+    const selectedMonth = roomCalendarDate.getMonth();
+    const now = new Date();
+    if (yearLabel) yearLabel.textContent = `${year}`;
+
+    track.innerHTML = '';
+
+    for (let month = 0; month < 12; month++) {
+        const card = document.createElement('article');
+        card.className = `month-card ${month === selectedMonth ? 'active' : ''}`;
+        card.setAttribute('role', 'button');
+        card.setAttribute('tabindex', '0');
+        card.style.animationDelay = `${month * 50}ms`;
+
+        const monthName = document.createElement('div');
+        monthName.className = 'month-card-title';
+        monthName.textContent = roomMonthNames[month];
+
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const daysGrid = document.createElement('div');
+        daysGrid.className = 'month-days-grid';
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dayDate = new Date(year, month, day);
+            const dayChip = document.createElement('button');
+            dayChip.type = 'button';
+            dayChip.className = 'month-day-chip';
+            dayChip.textContent = day;
+
+            if (dayDate.getDay() === 0 || dayDate.getDay() === 6) dayChip.classList.add('weekend');
+            if (dayDate.toDateString() === now.toDateString()) dayChip.classList.add('today');
+
+            const chipEvents = getRoomEventsForDate(dayDate);
+            if (chipEvents.length > 0) {
+                dayChip.classList.add('has-events');
+                dayChip.title = `${chipEvents.length} evenement(s)`;
+            }
+
+            dayChip.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                roomCalendarDate = new Date(year, month, 1);
+                await loadRoomEvents(currentRoomId);
+                selectRoomDay(dayDate);
+            });
+
+            daysGrid.appendChild(dayChip);
+        }
+
+        card.appendChild(monthName);
+        card.appendChild(daysGrid);
+
+        card.addEventListener('click', () => {
+            roomCalendarDate = new Date(year, month, 1);
+            loadRoomEvents(currentRoomId);
+        });
+
+        track.appendChild(card);
+    }
+
+    // Auto-scroll
+    setTimeout(() => {
+        const activeCard = track.querySelector('.month-card.active');
+        if (activeCard) activeCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }, 200);
+}
+
+// ──────────────────────────────────────────────
+// Timeline du salon (evenements a venir)
+// ──────────────────────────────────────────────
+function renderRoomTimeline() {
+    const timeline = document.getElementById('roomTimeline');
+    const countEl = document.getElementById('roomEventCount');
+    if (!timeline || !countEl) return;
+
+    const now = new Date();
+    const futureDate = new Date();
+    futureDate.setMonth(futureDate.getMonth() + 3);
+
+    const upcoming = roomEvents
+        .filter(e => e.date >= now && e.date <= futureDate)
+        .sort((a, b) => a.date - b.date);
+
+    countEl.textContent = `${upcoming.length} evenement${upcoming.length > 1 ? 's' : ''}`;
+
+    if (upcoming.length === 0) {
+        timeline.innerHTML = '<div style="text-align:center;opacity:0.6;">Aucun evenement a venir</div>';
+        return;
+    }
+
+    timeline.innerHTML = '';
+    upcoming.forEach(event => {
+        const daysDiff = Math.ceil((event.date - now) / (1000 * 60 * 60 * 24));
+        const memberName = getMemberName(event.userId);
+        const memberColor = getMemberColor(event.userId);
+        const div = document.createElement('div');
+        div.className = 'timeline-item';
+        div.style.borderLeft = `3px solid ${memberColor}`;
+        div.onclick = async () => {
+            if (event.userId === currentUserId) editRoomEvent(event);
+            else {
+                roomCalendarDate = new Date(event.date.getFullYear(), event.date.getMonth(), 1);
+                await loadRoomEvents(currentRoomId);
+                selectRoomDay(new Date(event.date));
+            }
+        };
+        div.innerHTML = `
+            <div class="timeline-item-title">${escapeHtml(event.title)}</div>
+            <div class="timeline-item-date">
+                ${event.date.toLocaleDateString('fr')} a ${event.date.toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' })}
+            </div>
+            <div class="timeline-item-type">
+                ${daysDiff === 0 ? '🔴 Aujourd\'hui' : daysDiff === 1 ? '🟠 Demain' : `📅 Dans ${daysDiff} jours`}
+                <span style="color:${memberColor};margin-left:8px;">${escapeHtml(memberName)}</span>
+            </div>
+        `;
+        timeline.appendChild(div);
+    });
+}
+
+// ──────────────────────────────────────────────
+// Modal evenement de salon
+// ──────────────────────────────────────────────
+function openRoomEventModal(date) {
+    if (!currentUserId) { showAlert('Connectez-vous pour creer un evenement'); return; }
+    if (!currentRoomId) return;
+
+    const modal = document.getElementById('roomEventModal');
+    if (!modal) return;
+
+    document.getElementById('roomEventModalTitle').textContent = `Nouvel evenement — ${date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+    // Stocker la date en format local YYYY-MM-DD pour eviter le decalage UTC
+    const localDateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    document.getElementById('roomEventDate').value = localDateStr;
+    document.getElementById('roomEventId').value = '';
+    document.getElementById('roomEventRoomId').value = currentRoomId;
+    document.getElementById('roomEventTitle').value = '';
+    document.getElementById('roomEventType').value = 'rdv';
+    document.getElementById('roomEventTime').value = '12:00';
+    document.getElementById('roomEventDescription').value = '';
+    document.getElementById('deleteRoomEventBtn').style.display = 'none';
+
+    const submitBtn = modal.querySelector('button[type="submit"]');
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Enregistrer'; }
+
+    modal.style.display = 'flex';
+    document.getElementById('roomEventTitle').focus();
+}
+
+function editRoomEvent(event) {
+    if (!currentUserId) return;
+
+    const modal = document.getElementById('roomEventModal');
+    if (!modal) return;
+
+    const eventDate = new Date(event.date);
+    document.getElementById('roomEventModalTitle').textContent = `Modifier — ${eventDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+    // Stocker la date en format local YYYY-MM-DD pour eviter le decalage UTC
+    const localDateStr = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}-${String(eventDate.getDate()).padStart(2, '0')}`;
+    document.getElementById('roomEventDate').value = localDateStr;
+    document.getElementById('roomEventId').value = event.id;
+    document.getElementById('roomEventRoomId').value = event.roomId;
+    document.getElementById('roomEventTitle').value = event.title;
+    document.getElementById('roomEventType').value = event.type;
+    document.getElementById('roomEventTime').value = eventDate.toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('roomEventDescription').value = event.description || '';
+    document.getElementById('deleteRoomEventBtn').style.display = 'block';
+
+    const submitBtn = modal.querySelector('button[type="submit"]');
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Enregistrer'; }
+
+    modal.style.display = 'flex';
+    document.getElementById('roomEventTitle').focus();
+}
+
+function closeRoomEventModal() {
+    const modal = document.getElementById('roomEventModal');
+    if (modal) modal.style.display = 'none';
 }
 
 // ──────────────────────────────────────────────
@@ -496,7 +1156,7 @@ async function joinRoom() {
             updatedAt: new Date()
         });
 
-        showAlert(`Vous avez rejoint "${escapeHtml(roomData.name)}" !`);
+        showAlert(`Vous avez rejoint "${roomData.name}" !`);
         if (codeInput) codeInput.value = '';
         if (passInput) passInput.value = '';
         closeJoinRoomModal();
@@ -508,26 +1168,6 @@ async function joinRoom() {
     }
 
     if (joinBtn) { joinBtn.disabled = false; joinBtn.textContent = 'Rejoindre'; }
-}
-
-// ──────────────────────────────────────────────
-// Onglets
-// ──────────────────────────────────────────────
-function switchTab(tabName) {
-    // Boutons onglets
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.tab === tabName);
-    });
-
-    // Contenu onglets
-    document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.toggle('active', content.id === `tab-${tabName}`);
-    });
-
-    // Charger les rooms au premier affichage
-    if (tabName === 'rooms' && rooms.length === 0 && currentUserId) {
-        loadRooms();
-    }
 }
 
 // ──────────────────────────────────────────────
@@ -543,11 +1183,6 @@ function escapeHtml(text) {
 // Initialisation
 // ──────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-    // Onglets
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
-    });
-
     // Modal creation room
     document.getElementById('openCreateRoomBtn')?.addEventListener('click', openCreateRoomModal);
     document.getElementById('createRoomBtn')?.addEventListener('click', createRoom);
@@ -570,11 +1205,121 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Enter') { e.preventDefault(); joinRoom(); }
     });
 
-    // Escape ferme le modal room
+    // Escape ferme les modals
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             const modal = document.getElementById('createRoomModal');
             if (modal && modal.style.display === 'flex') closeCreateRoomModal();
+            const joinModal = document.getElementById('joinRoomModal');
+            if (joinModal && joinModal.style.display === 'flex') closeJoinRoomModal();
+            const roomEventModal = document.getElementById('roomEventModal');
+            if (roomEventModal && roomEventModal.style.display === 'flex') closeRoomEventModal();
+        }
+    });
+
+    // Modal evenement salon
+    document.querySelector('.close-room-event-modal')?.addEventListener('click', closeRoomEventModal);
+    document.getElementById('roomEventModal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'roomEventModal') closeRoomEventModal();
+    });
+
+    // CRUD evenement salon
+    document.getElementById('roomEventForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Enregistrement...';
+
+        const eventId = document.getElementById('roomEventId').value;
+        const roomId = document.getElementById('roomEventRoomId').value;
+        const dateStr = document.getElementById('roomEventDate').value;
+        const title = document.getElementById('roomEventTitle').value.trim();
+        const type = document.getElementById('roomEventType').value;
+        const time = document.getElementById('roomEventTime').value;
+        const description = document.getElementById('roomEventDescription').value.trim();
+
+        if (!title) {
+            showAlert('Le titre est obligatoire');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Enregistrer';
+            return;
+        }
+
+        const timeParts = (time || '00:00').split(':');
+        const hours = parseInt(timeParts[0], 10) || 0;
+        const minutes = parseInt(timeParts[1], 10) || 0;
+        // dateStr est en format YYYY-MM-DD (local), parser manuellement pour eviter UTC
+        const dateParts = dateStr.split('-').map(Number);
+        const eventDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], hours, minutes, 0, 0);
+
+        const eventData = {
+            userId: currentUserId,
+            roomId: roomId,
+            title: title,
+            type: type,
+            date: eventDate,
+            description: description,
+            notified: false,
+            updatedAt: new Date()
+        };
+
+        console.log('[Rooms] Sauvegarde evenement:', { roomId, dateStr, eventDate: eventDate.toString(), eventData });
+
+        try {
+            if (eventId) {
+                await db.collection('events').doc(eventId).update(eventData);
+                showAlert('Evenement modifie !');
+            } else {
+                eventData.createdAt = new Date();
+                await db.collection('events').add(eventData);
+                showAlert('Evenement ajoute au salon !');
+            }
+
+            // Son de validation (empêche le double son avec showAlert)
+            if (typeof ChronosSounds !== 'undefined') {
+                ChronosSounds._skipNextNotification = true;
+                ChronosSounds.playValidation();
+            }
+
+            closeRoomEventModal();
+            await loadRoomEvents(roomId);
+        } catch (error) {
+            console.error('[Rooms] Erreur sauvegarde evenement:', error);
+            showAlert('Erreur: ' + error.message);
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Enregistrer';
+        }
+    });
+
+    document.getElementById('deleteRoomEventBtn')?.addEventListener('click', async () => {
+        const eventId = document.getElementById('roomEventId').value;
+        const roomId = document.getElementById('roomEventRoomId').value;
+
+        console.log('[Rooms] Suppression demandee, eventId:', eventId, 'roomId:', roomId);
+
+        if (!eventId) {
+            showAlert('Erreur: aucun evenement selectionne');
+            return;
+        }
+
+        if (confirm('Supprimer cet evenement du salon ?')) {
+            const btn = document.getElementById('deleteRoomEventBtn');
+            btn.disabled = true;
+            btn.textContent = 'Suppression...';
+
+            try {
+                await db.collection('events').doc(eventId).delete();
+                showAlert('Evenement supprime !');
+                if (typeof ChronosSounds !== 'undefined') ChronosSounds.playNotification();
+                closeRoomEventModal();
+                await loadRoomEvents(roomId);
+            } catch (error) {
+                console.error('[Rooms] Erreur suppression:', error);
+                showAlert('Erreur suppression: ' + error.message);
+                btn.disabled = false;
+                btn.textContent = 'Supprimer';
+            }
         }
     });
 });
@@ -582,9 +1327,13 @@ document.addEventListener('DOMContentLoaded', () => {
 // Charger les rooms quand l'auth est prete
 auth.onAuthStateChanged((user) => {
     if (user) {
+        currentUserId = user.uid;
+        console.log('[Rooms] Utilisateur connecte:', user.email);
         loadRooms();
     } else {
+        currentUserId = null;
         rooms = [];
+        roomEvents = [];
         renderRoomsList();
     }
 });

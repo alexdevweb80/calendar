@@ -2475,3 +2475,343 @@ button:disabled {
     opacity: 0.5;
 }
 
+/* ──────────────────────────────────────────────
+   Calendrier complet du salon
+   ────────────────────────────────────────────── */
+.room-calendar-section {
+    margin-top: 20px;
+}
+.room-full-calendar {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px) saturate(1.5);
+    border: 1px solid rgba(0, 246, 255, 0.22);
+    border-radius: 16px;
+    padding: 24px;
+}
+
+/* Top bar: nav + pickers */
+.room-cal-top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+.room-cal-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.room-cal-month-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.2rem;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 12px rgba(0, 246, 255, 0.5);
+    margin: 0;
+}
+.room-cal-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.room-cal-today {
+    font-size: 0.82rem;
+}
+
+/* Legend */
+.room-cal-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 14px;
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+.room-cal-legend span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Weekdays */
+.room-calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 4px;
+}
+.room-calendar-weekdays > div {
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.5);
+    padding: 6px 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Grid — reuse existing calendar-day classes */
+.room-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    grid-auto-rows: minmax(100px, auto);
+}
+
+/* Members legend */
+.room-members-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.room-legend-member {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+.room-legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 6px currentColor;
+}
+
+/* Carousel wrapper inside room */
+.room-carousel-wrapper {
+    margin-top: 24px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 246, 255, 0.12);
+    border-radius: 12px;
+    padding: 16px;
+}
+.room-carousel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+.room-carousel-title {
+    font-size: 1rem !important;
+    margin: 0 !important;
+}
+.room-carousel-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.room-carousel-year-label {
+    font-family: 'Orbitron', monospace;
+    font-size: 1rem;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 8px rgba(0, 246, 255, 0.4);
+}
+.room-carousel-track {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 246, 255, 0.3) transparent;
+}
+.room-carousel-track .month-card {
+    min-width: 220px;
+    flex-shrink: 0;
+    scroll-snap-align: start;
+}
+
+/* Day panel inside room (inline, not fixed) */
+.room-day-panel {
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px) saturate(1.4);
+    border: 1px solid rgba(0, 246, 255, 0.22);
+    border-radius: 14px;
+    padding: 20px;
+    margin-top: 16px;
+    animation: modalFadeIn 0.3s ease;
+}
+.room-day-panel .day-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+.room-day-panel .day-panel-date {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.95rem;
+    text-transform: capitalize;
+    color: var(--neon-cyan);
+    margin: 0;
+    text-shadow: 0 0 8px rgba(0, 246, 255, 0.4);
+}
+.room-day-panel .close-day-panel {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 1.4rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+.room-day-panel .close-day-panel:hover {
+    color: var(--neon-pink);
+    background: rgba(255, 45, 191, 0.1);
+}
+.room-day-panel .day-panel-add {
+    width: 100%;
+    margin-bottom: 14px;
+}
+.room-day-panel .day-panel-empty {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.4);
+    padding: 16px 0;
+}
+.room-day-panel .day-panel-event {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    overflow: hidden;
+    transition: all 0.2s;
+}
+.room-day-panel .day-panel-event:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(0, 246, 255, 0.2);
+}
+.room-day-panel .day-panel-event-body {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    flex: 1;
+    min-width: 0;
+}
+.room-event-member-bar {
+    width: 4px;
+    flex-shrink: 0;
+}
+.room-day-panel .day-panel-event-time {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.6);
+    white-space: nowrap;
+}
+.room-day-panel .day-panel-event-info {
+    flex: 1;
+    min-width: 0;
+}
+.room-day-panel .day-panel-event-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.9);
+}
+.room-day-panel .day-panel-event-author {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+}
+.room-day-panel .day-panel-event-desc {
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.45);
+    margin-top: 3px;
+    line-height: 1.3;
+}
+.room-day-panel .day-panel-event-actions {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+}
+.room-day-panel .day-panel-edit,
+.room-day-panel .day-panel-delete {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.85rem;
+    padding: 6px;
+    border-radius: 6px;
+    transition: background 0.2s;
+    opacity: 0.5;
+}
+.room-day-panel .day-panel-edit:hover,
+.room-day-panel .day-panel-delete:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Timeline du salon */
+.room-timeline-section {
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px) saturate(1.4);
+    border: 1px solid rgba(0, 246, 255, 0.22);
+    border-radius: 14px;
+    padding: 20px;
+    margin-top: 16px;
+}
+.room-timeline-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+.room-timeline-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.9);
+}
+.room-timeline-count {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.8rem;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 6px rgba(0, 246, 255, 0.3);
+}
+.room-timeline {
+    max-height: 300px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 246, 255, 0.3) transparent;
+}
+
+/* Responsive room calendar */
+@media (max-width: 768px) {
+    .room-cal-top-bar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .room-cal-actions {
+        width: 100%;
+    }
+    .room-carousel-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+@media (max-width: 480px) {
+    .room-full-calendar {
+        padding: 14px;
+    }
+    .room-cal-month-title {
+        font-size: 0.95rem;
+    }
+    .room-cal-actions {
+        flex-wrap: wrap;
+    }
+    .room-members-legend {
+        gap: 8px;
+    }
+}
+

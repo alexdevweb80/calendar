@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion - Planning Partagé</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="glass-card auth-card">
+            <h2 class="neon-text">🔐 Connexion</h2>
+            
+            <div id="errorMessage" class="error-message" style="display: none;"></div>
+            
+            <form id="loginForm">
+                <div class="input-group">
+                    <label>Email</label>
+                    <input type="email" id="email" class="glass-input" required>
+                </div>
+                
+                <div class="input-group">
+                    <label>Mot de passe</label>
+                    <input type="password" id="password" class="glass-input" required>
+                </div>
+                
+                <button type="submit" class="neon-button">Se connecter</button>
+            </form>
+            
+            <p class="auth-link">
+                Pas de compte ? <a href="register.html">S'inscrire</a>
+            </p>
+        </div>
+    </div>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+</body>
+</html>

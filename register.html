@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscription - Planning Partagé</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="glass-card auth-card">
+            <h2 class="neon-text">✨ Inscription</h2>
+            
+            <div id="errorMessage" class="error-message" style="display: none;"></div>
+            <div id="successMessage" class="success-message" style="display: none;"></div>
+            
+            <form id="registerForm">
+                <div class="input-group">
+                    <label>Nom d'utilisateur</label>
+                    <input type="text" id="username" class="glass-input" required>
+                </div>
+                
+                <div class="input-group">
+                    <label>Email</label>
+                    <input type="email" id="email" class="glass-input" required>
+                </div>
+                
+                <div class="input-group">
+                    <label>Mot de passe</label>
+                    <input type="password" id="password" class="glass-input" required>
+                </div>
+                
+                <div class="input-group">
+                    <label>Confirmer le mot de passe</label>
+                    <input type="password" id="confirmPassword" class="glass-input" required>
+                </div>
+                
+                <button type="submit" class="neon-button">Créer mon compte</button>
+            </form>
+            
+            <p class="auth-link">
+                Déjà un compte ? <a href="login.html">Se connecter</a>
+            </p>
+        </div>
+    </div>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+</body>
+</html>

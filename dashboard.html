@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Planning Partagé</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="alertContainer" class="alert-container"></div>
+    
+    <div class="dashboard-header">
+        <h1 class="neon-text">📅 Chronus-Planning</h1>
+        <div class="user-info">
+            <span id="userName" class="user-name"></span>
+            <button id="logoutBtn" class="logout-button">Déconnexion</button>
+        </div>
+    </div>
+    
+    <div class="dashboard-container">
+        <!-- Calendrier -->
+        <div class="glass-card calendar-container">
+            <div class="calendar-header">
+                <div class="calendar-controls">
+                    <button id="prevMonth" class="nav-button" aria-label="Mois précédent">◀</button>
+                    <h2 id="currentMonthYear" class="month-title"></h2>
+                    <button id="nextMonth" class="nav-button" aria-label="Mois suivant">▶</button>
+                </div>
+                <div class="calendar-actions">
+                    <button id="todayBtn" class="nav-button today-button">Aujourd'hui</button>
+                    <select id="yearRangePicker" class="glass-input year-picker" aria-label="Choisir une annee"></select>
+                    <input type="month" id="monthPicker" class="glass-input month-picker" aria-label="Choisir un mois">
+                </div>
+            </div>
+
+            <div class="calendar-legend">
+                <span><i class="legend-dot rdv"></i> Rendez-vous</span>
+                <span><i class="legend-dot reunion"></i> Réunion</span>
+                <span><i class="legend-dot fete"></i> Fête</span>
+                <span><i class="legend-dot anniversaire"></i> Anniversaire</span>
+                <span><i class="legend-dot other"></i> Autre</span>
+            </div>
+            
+            <div class="calendar-weekdays">
+                <div>Lun</div><div>Mar</div><div>Mer</div><div>Jeu</div><div>Ven</div><div>Sam</div><div>Dim</div>
+            </div>
+            
+            <div id="calendarGrid" class="calendar-grid"></div>
+        </div>
+
+        <!-- Widgets: Citation + Meteo -->
+        <div class="widgets-row">
+            <!-- Generateur de citations -->
+            <div class="glass-card widget-card quote-widget">
+                <div class="quote-header">
+                    <h3 class="neon-text">✨ Citation du moment</h3>
+                    <div class="quote-category-btns">
+                        <button class="quote-cat-btn active" data-category="motivation">💪 Motivation</button>
+                        <button class="quote-cat-btn" data-category="amour">❤️ Amour</button>
+                    </div>
+                </div>
+                <div id="quoteContent" class="quote-content">
+                    <p id="quoteText" class="quote-text">Chargement...</p>
+                    <span id="quoteAuthor" class="quote-author"></span>
+                </div>
+                <button id="newQuoteBtn" class="neon-button quote-refresh-btn" type="button">🔄 Nouvelle citation</button>
+            </div>
+
+            <!-- Meteo en direct -->
+            <div class="glass-card widget-card weather-widget">
+                <div class="weather-header">
+                    <h3 class="neon-text">🌤️ Meteo en direct</h3>
+                    <div class="weather-search">
+                        <input type="text" id="weatherCity" class="glass-input" placeholder="Ville..." value="Paris">
+                        <button id="weatherSearchBtn" class="nav-button" type="button">🔍</button>
+                    </div>
+                </div>
+                <div id="weatherContent" class="weather-content">
+                    <div class="weather-loading">Chargement...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card month-carousel-wrapper">
+            <div class="month-carousel-header">
+                <h3 class="neon-text month-carousel-title">Carrousel annuel</h3>
+                <div class="month-carousel-controls">
+                    <button id="prevYear" class="nav-button" aria-label="Annee precedente">◀ Annee</button>
+                    <span id="carouselYearLabel" class="carousel-year-label"></span>
+                    <button id="nextYear" class="nav-button" aria-label="Annee suivante">Annee ▶</button>
+                </div>
+            </div>
+            <div id="monthCarouselTrack" class="month-carousel-track"></div>
+        </div>
+    </div>
+    
+    <!-- Panneau detail du jour -->
+    <div id="dayPanel" class="day-panel glass-card"></div>
+
+    <!-- Modal de création d'événement -->
+    <div id="eventModal" class="modal" style="display: none;">
+        <div class="modal-content glass-card">
+            <span class="close-modal">&times;</span>
+            <h3 class="neon-text" id="modalTitle">Nouvel événement</h3>
+            
+            <form id="eventForm">
+                <input type="hidden" id="eventDate">
+                <input type="hidden" id="eventId">
+                
+                <div class="input-group">
+                    <label>Titre</label>
+                    <input type="text" id="eventTitle" class="glass-input" required>
+                </div>
+                
+                <div class="input-group">
+                    <label>Type</label>
+                    <select id="eventType" class="glass-input">
+                        <option value="rdv">📅 Rendez-vous</option>
+                        <option value="fete">🎉 Fête</option>
+                        <option value="reunion">💼 Réunion</option>
+                        <option value="anniversaire">🎂 Anniversaire</option>
+                        <option value="other">📝 Autre</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label>Heure</label>
+                    <input type="time" id="eventTime" class="glass-input">
+                </div>
+                
+                <div class="input-group">
+                    <label>Description</label>
+                    <textarea id="eventDescription" class="glass-input" rows="3"></textarea>
+                </div>
+                
+                <div class="modal-buttons">
+                    <button type="submit" class="neon-button">Enregistrer</button>
+                    <button type="button" id="deleteEventBtn" class="delete-button" style="display: none;">Supprimer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Frise chronologique -->
+    <div class="timeline-container glass-card">
+        <div class="timeline-header">
+            <h3>📋 Événements à venir</h3>
+            <span class="timeline-count" id="eventCount">0 événement</span>
+        </div>
+        <div id="timeline" class="timeline"></div>
+    </div>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/calendar.js"></script>
+    <script src="js/widgets.js"></script>
+</body>
+</html>

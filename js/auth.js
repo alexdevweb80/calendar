@@ -25,15 +25,26 @@ function afficherErreur(div, message) {
 
 // Verifier si l'utilisateur est connecte
 auth.onAuthStateChanged((user) => {
-    const page = window.location.pathname.toLowerCase();
+    const pagePath = window.location.pathname.toLowerCase();
+    const page = pagePath.split('/').pop();
     const isAuthPage = page.includes('login') || page.includes('register');
-    const isHome = page.endsWith('/') || page.includes('index');
+    const isHome = page === '' || page.includes('index');
     
     console.log('[Auth] Etat:', user ? user.email : 'deconnecte', '| Page:', page);
     
+    // Prevention boucle infinie sur "file://" 
+    if (window.location.protocol === 'file:' && window.sessionStorage.getItem('file_protocol_warned') !== 'true') {
+        console.warn("Attention: Firebase Auth ne partage pas la session entre les pages avec le protocole file:// sur les navigateurs modernes. Cela cause une boucle de redirection.");
+        if (user && isAuthPage) {
+            window.sessionStorage.setItem('file_protocol_warned', 'true');
+            alert("Erreur Protocole file:// \nFirebase ne peut pas partager votre session entre login.html et dashboard.html en mode fichier local.\n\nVeuillez ouvrir ce projet avec un serveur web local (ex: VSCode Live Server, WAMP, XAMPP, npx serve).");
+            return;
+        }
+    }
+
     if (user) {
         if (isAuthPage || isHome) {
-            window.location.href = 'dashboard.html';
+            window.location.replace('dashboard.html');
         }
         const userNameElement = document.getElementById('userName');
         if (userNameElement) {
@@ -41,7 +52,7 @@ auth.onAuthStateChanged((user) => {
         }
     } else {
         if (!isAuthPage && !isHome) {
-            window.location.href = 'login.html';
+            window.location.replace('login.html');
         }
     }
 });
@@ -66,7 +77,12 @@ if (loginForm) {
             console.log('[Auth] Connexion reussie');
             // Son de connexion
             if (typeof ChronosSounds !== 'undefined') ChronosSounds.playLogin();
-            setTimeout(() => { window.location.href = 'dashboard.html'; }, 600);
+            
+            // Prevention file://
+            if (window.location.protocol === 'file:') {
+                alert("Connecté ! Mais comme vous utilisez 'file://', la redirection vers dashboard.html va échouer (Local Storage isolé). Lancement d'un serveur local recommandé.");
+            }
+            setTimeout(() => { window.location.replace('dashboard.html'); }, 600);
         } catch (error) {
             console.error('[Auth] Echec connexion:', error.code, error.message);
             afficherErreur(errorDiv, traduireErreur(error.code));
@@ -118,8 +134,12 @@ if (registerForm) {
             successDiv.textContent = 'Compte cree avec succes ! Redirection...';
             successDiv.style.display = 'block';
             
+            // Prevention file://
+            if (window.location.protocol === 'file:') {
+                alert("Compte créé ! Mais comme vous utilisez 'file://', la redirection va échouer car votre navigateur isole la session. Veuillez lancer un Web Server local.");
+            }
             setTimeout(() => {
-                window.location.href = 'dashboard.html';
+                window.location.replace('dashboard.html');
             }, 1500);
         } catch (error) {
             console.error('[Auth] Echec inscription:', error.code, error.message);

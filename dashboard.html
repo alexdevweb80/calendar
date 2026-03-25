@@ -32,7 +32,7 @@
     <div id="alertContainer" class="alert-container"></div>
 
     <div class="dashboard-header">
-        <h1 class="neon-text">📅 Chronus-Planning</h1>
+        <h1 class="neon-text">📅 WEPLAN</h1>
         <div class="user-info">
             <span id="userName" class="user-name"></span>
             <button id="logoutBtn" class="logout-button">Déconnexion</button>
@@ -91,12 +91,32 @@
 
     </div>
 
+    <!-- Modal Pop-up Rappel d'événements -->
+    <div id="eventAlertModal" class="modal" style="display: none; z-index: 2000;">
+        <div class="modal-content glass-card"
+            style="border: 2px solid var(--neon-cyan); box-shadow: 0 0 30px rgba(0,240,255,0.2);">
+            <span class="close-alert-modal close-modal"
+                style="position: absolute; right: 20px; top: 20px; font-size: 24px; cursor: pointer;">&times;</span>
+            <h3 class="neon-text" style="color: var(--neon-cyan);">🔔 Rappel Événements !</h3>
+            <p style="font-size: 14px; margin-bottom: 20px;">Voici les événements en cours ou à prévoir très vite :</p>
+            <div id="eventAlertList"
+                style="text-align: left; max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;">
+                <!-- Les événements s'afficheront ici -->
+            </div>
+            <div class="modal-buttons" style="margin-top: 20px;">
+                <button id="closeEventAlertBtn" class="neon-button" type="button">J'ai compris</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Garde Alternée -->
     <div id="custodyModal" class="modal" style="display: none;">
         <div class="modal-content glass-card">
-            <span class="close-custody-modal close-modal" style="position: absolute; right: 20px; top: 20px; font-size: 24px; cursor: pointer;">&times;</span>
+            <span class="close-custody-modal close-modal"
+                style="position: absolute; right: 20px; top: 20px; font-size: 24px; cursor: pointer;">&times;</span>
             <h3 class="neon-text">👶 Garde Alternée</h3>
-            <p style="font-size: 13px; margin-bottom: 20px;">Définissez une règle de garde "1 semaine sur 2". Le calendrier s'occupera du reste !</p>
+            <p style="font-size: 13px; margin-bottom: 20px;">Définissez une règle de garde "1 semaine sur 2". Le
+                calendrier s'occupera du reste !</p>
             <div class="input-group">
                 <label>Parent A (Dès la date de début)</label>
                 <select id="custodyParentA" class="glass-input"></select>
@@ -111,7 +131,8 @@
             </div>
             <div class="modal-buttons" style="margin-top: 20px;">
                 <button id="saveCustodyBtn" class="neon-button" type="button">Activer</button>
-                <button id="disableCustodyBtn" class="delete-button" type="button" style="display:none;">Désactiver</button>
+                <button id="disableCustodyBtn" class="delete-button" type="button"
+                    style="display:none;">Désactiver</button>
             </div>
         </div>
     </div>

@@ -419,6 +419,11 @@ async function openRoomDetail(room) {
 
     // Charger les evenements du salon (re-render avec donnees)
     await loadRoomEvents(room.id);
+
+    // Vérifier les événements à venir pour le Pop-up
+    setTimeout(() => {
+        checkUpcomingEventsPopUp(room.id);
+    }, 500);
 }
 
 function closeRoomDetail() {
@@ -1454,7 +1459,93 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.id === 'custodyModal') closeCustodyModal();
     });
 
+    // Écouteurs Pop-up Événements
+    document.querySelector('.close-alert-modal')?.addEventListener('click', () => {
+        const modal = document.getElementById('eventAlertModal');
+        if (modal) modal.style.display = 'none';
+    });
+    document.getElementById('closeEventAlertBtn')?.addEventListener('click', () => {
+        const modal = document.getElementById('eventAlertModal');
+        if (modal) modal.style.display = 'none';
+    });
+    document.getElementById('eventAlertModal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'eventAlertModal') {
+            e.target.style.display = 'none';
+        }
+    });
+
 });
+
+// ──────────────────────────────────────────────
+// Pop-up d'alerte à l'ouverture du salon
+// ──────────────────────────────────────────────
+function checkUpcomingEventsPopUp(roomId) {
+    if (!roomEvents || roomEvents.length === 0) return;
+
+    const todayStr = new Date().toDateString();
+    const sessionKey = 'notified_room_' + roomId;
+    if (sessionStorage.getItem(sessionKey) === todayStr) {
+        return; // Déjà notifié aujourd'hui pour cette session
+    }
+
+    const now = new Date();
+    // En cours : depuis 2 heures avant maintenant
+    const startWindow = new Date(now.getTime() - 2 * 60 * 60 * 1000); 
+    const endWindow = new Date(now);
+    endWindow.setDate(now.getDate() + 2); // Jusqu'à après-demain
+    endWindow.setHours(23, 59, 59, 999);
+
+    const upcoming = [];
+    roomEvents.forEach(e => {
+        let occDate = new Date(e.date);
+        if (e.recurrence === 'yearly') {
+            occDate.setFullYear(now.getFullYear());
+            if (occDate < startWindow && occDate.toDateString() !== now.toDateString()) {
+                occDate.setFullYear(now.getFullYear() + 1);
+            }
+        }
+        if (occDate >= startWindow && occDate <= endWindow) {
+            upcoming.push({ ...e, displayDate: occDate });
+        }
+    });
+
+    if (upcoming.length === 0) return;
+
+    upcoming.sort((a, b) => a.displayDate - b.displayDate);
+
+    const listContainer = document.getElementById('eventAlertList');
+    if (!listContainer) return;
+    listContainer.innerHTML = '';
+
+    upcoming.forEach(event => {
+        const d = event.displayDate;
+        const dReset = new Date(d).setHours(0,0,0,0);
+        const nowReset = new Date().setHours(0,0,0,0);
+        const diffDays = Math.floor((dReset - nowReset) / (1000 * 60 * 60 * 24));
+        const memberColor = getMemberColor(event.userId);
+        
+        let dayLabel = "Aujourd'hui";
+        if (diffDays === 1) dayLabel = "Demain";
+        else if (diffDays === 2) dayLabel = "Après-demain";
+        else if (diffDays < 0) dayLabel = "En cours";
+
+        listContainer.innerHTML += `
+            <div style="background: rgba(255,255,255,0.05); border-left: 4px solid ${memberColor}; padding: 10px; border-radius: 8px;">
+                <div style="font-weight: bold; color: #fff;">${getEventIcon(event.type)} ${escapeHtml(event.title)} ${event.recurrence === 'yearly' ? '🔄' : ''}</div>
+                <div style="font-size: 12px; opacity: 0.8; margin-top: 4px;">
+                    <span style="color: var(--neon-cyan)">${dayLabel}</span> à ${d.toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' })}
+                    <span style="color: ${memberColor}; margin-left: 10px;">👤 ${escapeHtml(getMemberName(event.userId))}</span>
+                </div>
+            </div>
+        `;
+    });
+
+    const modal = document.getElementById('eventAlertModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        sessionStorage.setItem(sessionKey, todayStr);
+    }
+}
 
 // ──────────────────────────────────────────────
 // Logique Garde Alternée Modal

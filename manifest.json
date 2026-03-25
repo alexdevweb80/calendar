@@ -1,0 +1,18 @@
+{
+  "background_color": "#ffffff",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "alexdevweb80.github",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "alexdevweb80.github",
+  "start_url": "/https://alexdevweb80.github.io/calendar/login.html",
+  "theme_color": "#07050f",
+  "id": "WEPLAN",
+  "description": "Ce projet a été un excellent exercice pour approfondir ma maîtrise de l'écosystème Firebase et réfléchir à l'UX d'une application collaborative. Tous les retours sont les bienvenus !\nJe suis fier de vous présenter WePlan, mon dernier projet : un site de planning collaboratif conçu pour faciliter la gestion des emplois du temps en équipe.\nQue ce soit pour une petite équipe, une association ou un groupe d'amis, organiser des créneaux communs peut vite devenir un casse-tête. WePlan centralise tout dans une interface simple et intuitive.",
+  "categories": [
+    "books",
+    "business",
+    "lifestyle"
+  ]
+}

@@ -187,13 +187,15 @@ function renderRoomsList() {
 // Detail d'une room
 // ──────────────────────────────────────────────
 async function openRoomDetail(room) {
+    if (currentRoomId !== room.id) {
+        roomCalendarDate = new Date();
+        if (roomCalendarDate.getFullYear() < YEAR_START || roomCalendarDate.getFullYear() > YEAR_END) {
+            roomCalendarDate = new Date(YEAR_START, 0, 1);
+        }
+        selectedRoomDay = null;
+    }
     currentRoomId = room.id;
     currentOpenRoom = room;
-    roomCalendarDate = new Date();
-    if (roomCalendarDate.getFullYear() < YEAR_START || roomCalendarDate.getFullYear() > YEAR_END) {
-        roomCalendarDate = new Date(YEAR_START, 0, 1);
-    }
-    selectedRoomDay = null;
     const panel = document.getElementById('roomDetailPanel');
     if (!panel) return;
 
@@ -202,14 +204,18 @@ async function openRoomDetail(room) {
 
     let membersHtml = '';
     members.forEach(m => {
+        const isMe = m.uid === currentUserId;
+        const color = getMemberColor(m.uid);
         membersHtml += `
             <div class="room-member">
-                <span class="room-member-avatar">${(m.name || m.email || '?')[0].toUpperCase()}</span>
+                <span class="room-member-avatar" style="background-color: ${color};">${(m.name || m.email || '?')[0].toUpperCase()}</span>
                 <div class="room-member-info">
-                    <span class="room-member-name">${escapeHtml(m.name || m.email)}</span>
-                    <span class="room-member-email">${escapeHtml(m.email)}</span>
+                    <span class="room-member-name" style="font-weight: ${isMe ? 'bold' : 'normal'}; color: ${isMe ? 'var(--neon-cyan)' : 'inherit'}">
+                        ${escapeHtml(m.name || m.email)} ${isMe ? '(Vous)' : ''}
+                    </span>
                 </div>
-                ${isCreator && m.uid !== currentUserId ? `<button class="room-kick-btn" data-uid="${m.uid}" title="Retirer">✕</button>` : ''}
+                ${isMe ? `<input type="color" class="room-member-color-picker" value="${color}" data-uid="${m.uid}" title="Changer ma couleur" style="margin-right: 10px; cursor: pointer; background: transparent; border: none; outline: none; width: 30px; height: 30px; padding: 0;">` : ''}
+                ${isCreator && !isMe ? `<button class="room-kick-btn" data-uid="${m.uid}" title="Retirer">✕</button>` : ''}
             </div>
         `;
     });
@@ -268,19 +274,12 @@ async function openRoomDetail(room) {
                         <h2 class="room-cal-month-title" id="roomCalMonthTitle"></h2>
                         <button class="nav-button room-cal-next" type="button" aria-label="Mois suivant">▶</button>
                     </div>
-                    <div class="room-cal-actions">
+                <div class="room-cal-actions">
+                        <button id="openCustodyBtn" class="nav-button" type="button" title="Garde Alternée" style="border-color: var(--neon-cyan); color: var(--neon-cyan);">👶 Garde</button>
                         <button class="nav-button room-cal-today" type="button">Aujourd'hui</button>
                         <select id="roomYearPicker" class="glass-input year-picker">${yearOptionsHtml}</select>
                         <input type="month" id="roomMonthPicker" class="glass-input month-picker" min="${YEAR_START}-01" max="${YEAR_END}-12">
                     </div>
-                </div>
-
-                <div class="room-cal-legend">
-                    <span><i class="legend-dot rdv"></i> RDV</span>
-                    <span><i class="legend-dot reunion"></i> Reunion</span>
-                    <span><i class="legend-dot fete"></i> Fete</span>
-                    <span><i class="legend-dot anniversaire"></i> Anniversaire</span>
-                    <span><i class="legend-dot other"></i> Autre</span>
                 </div>
 
                 <div class="room-calendar-weekdays">
@@ -340,6 +339,13 @@ async function openRoomDetail(room) {
             if (confirm('Retirer ce participant ?')) {
                 await removeParticipant(room, uid);
             }
+        });
+    });
+
+    panel.querySelectorAll('.room-member-color-picker').forEach(input => {
+        input.addEventListener('change', async (e) => {
+            const newColor = e.target.value;
+            await changeMemberColor(room, currentUserId, newColor);
         });
     });
 
@@ -501,10 +507,21 @@ function getRoomCalendarGridBounds(baseDate) {
 }
 
 function getRoomEventsForDate(date) {
-    return roomEvents.filter(ev => ev.date.toDateString() === date.toDateString());
+    return roomEvents.filter(ev => {
+        if (ev.recurrence === 'yearly') {
+            return ev.date.getMonth() === date.getMonth() && 
+                   ev.date.getDate() === date.getDate() && 
+                   date.getFullYear() >= ev.date.getFullYear();
+        }
+        return ev.date.toDateString() === date.toDateString();
+    });
 }
 
 function getMemberColor(uid) {
+    if (!currentOpenRoom) return '#00f6ff';
+    const member = (currentOpenRoom.members || []).find(m => m.uid === uid);
+    if (member && member.color) return member.color;
+
     const colors = ['#00f6ff', '#ff2dbf', '#5a7bff', '#b44aff', '#39ff14', '#ffd700', '#ff6b35', '#ff4757'];
     if (!uid) return colors[0];
     let hash = 0;
@@ -514,10 +531,50 @@ function getMemberColor(uid) {
     return colors[Math.abs(hash) % colors.length];
 }
 
+function getEventIcon(type) {
+    const icons = {
+        ecole: '🏫',
+        enfants: '👶',
+        medecin: '🩺',
+        veterinaire: '🐾',
+        vacances: '🏖️',
+        rdv: '📅',
+        fete: '🎉',
+        reunion: '💼',
+        anniversaire: '🎂',
+        other: '📝'
+    };
+    return icons[type] || '📅';
+}
+
 function getMemberName(uid) {
     if (!currentOpenRoom) return 'Inconnu';
     const member = (currentOpenRoom.members || []).find(m => m.uid === uid);
-    return member ? (member.name || member.email) : 'Inconnu';
+    const rawName = member ? (member.name || member.email) : 'Inconnu';
+    return uid === currentUserId ? `${rawName} (Vous)` : rawName;
+}
+
+async function changeMemberColor(room, uid, color) {
+    try {
+        const updatedMembers = (room.members || []).map(m => {
+            if (m.uid === uid) return { ...m, color: color };
+            return m;
+        });
+        await db.collection('rooms').doc(room.id).update({
+            members: updatedMembers,
+            updatedAt: new Date()
+        });
+        showAlert('Couleur mise à jour !');
+        
+        currentOpenRoom.members = updatedMembers;
+        const index = rooms.findIndex(r => r.id === room.id);
+        if (index !== -1) rooms[index].members = updatedMembers;
+
+        openRoomDetail(currentOpenRoom); // Refresh panel
+    } catch (error) {
+        console.error('[Rooms] Erreur changement couleur:', error);
+        showAlert('Erreur: ' + error.message);
+    }
 }
 
 function renderRoomCalendar() {
@@ -548,6 +605,36 @@ function renderRoomCalendar() {
         const isSelected = selectedRoomDay && cellDate.toDateString() === selectedRoomDay.toDateString();
         const dayEvents = getRoomEventsForDate(cellDate);
 
+        // --- Logique Garde Alternée ---
+        let custodyIndicatorHtml = '';
+        if (currentOpenRoom && currentOpenRoom.custodyConfig && currentOpenRoom.custodyConfig.enabled) {
+            const config = currentOpenRoom.custodyConfig;
+            const configDateStr = config.startDate; // YYYY-MM-DD
+            const configParts = configDateStr.split('-');
+            const configDate = new Date(configParts[0], configParts[1] - 1, configParts[2]);
+            
+            // Calculer difference en jours (ignorer l'heure)
+            const cellDateUTC = Date.UTC(cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate());
+            const configDateUTC = Date.UTC(configDate.getFullYear(), configDate.getMonth(), configDate.getDate());
+            
+            let parentUid = null;
+            if (cellDateUTC >= configDateUTC) {
+                const diffDays = Math.floor((cellDateUTC - configDateUTC) / (1000 * 60 * 60 * 24));
+                const cycleWeek = Math.floor(diffDays / 7);
+                parentUid = (cycleWeek % 2 === 0) ? config.parentA : config.parentB;
+            } else {
+                // Pour les dates antérieures au début de la règle : on recule !
+                const diffDays = Math.floor((configDateUTC - cellDateUTC) / (1000 * 60 * 60 * 24));
+                // Si on recule de 1 à 7 jours -> semaine précédente = alternance
+                const cycleWeekBefore = Math.floor((diffDays - 1) / 7);
+                parentUid = (cycleWeekBefore % 2 === 0) ? config.parentB : config.parentA;
+            }
+            if (parentUid) {
+                const parentColor = getMemberColor(parentUid);
+                custodyIndicatorHtml = `<div class="custody-indicator" style="background-color: ${parentColor};" title="Garde: ${getMemberName(parentUid)}">👶</div>`;
+            }
+        }
+
         const dayDiv = document.createElement('div');
         dayDiv.className = [
             'calendar-day',
@@ -574,14 +661,20 @@ function renderRoomCalendar() {
         dayNumber.className = 'day-number';
         dayNumber.textContent = cellDate.getDate();
         dayDiv.appendChild(dayNumber);
+        
+        // Ajouter Indicateur visuel Garde Alternée
+        if (custodyIndicatorHtml) {
+            dayDiv.insertAdjacentHTML('beforeend', custodyIndicatorHtml);
+        }
 
         // Evenements visibles (max 3) avec couleur membre
         dayEvents.slice(0, 3).forEach(event => {
+            const eventColor = getMemberColor(event.userId);
             const eventDiv = document.createElement('div');
             eventDiv.className = `event-item ${event.type}`;
-            eventDiv.style.borderLeft = `3px solid ${getMemberColor(event.userId)}`;
-            eventDiv.textContent = event.title;
-            eventDiv.title = `${event.title} — ${getMemberName(event.userId)} — ${event.date.toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' })}`;
+            eventDiv.style.backgroundColor = eventColor;
+            eventDiv.textContent = `${getEventIcon(event.type)} ${event.title}`;
+            eventDiv.title = `${getEventIcon(event.type)} ${event.title} — ${getMemberName(event.userId)} — ${event.date.toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' })}`;
             eventDiv.addEventListener('click', (e) => {
                 e.stopPropagation();
                 if (event.userId === currentUserId) {
@@ -653,7 +746,7 @@ function renderRoomDayPanel(date) {
                     <div class="day-panel-event-body">
                         <div class="day-panel-event-time">${time}</div>
                         <div class="day-panel-event-info">
-                            <div class="day-panel-event-title">${escapeHtml(event.title)}</div>
+                            <div class="day-panel-event-title">${getEventIcon(event.type)} ${escapeHtml(event.title)}</div>
                             <div class="day-panel-event-author" style="color:${memberColor};">${escapeHtml(memberName)}</div>
                             ${event.description ? `<div class="day-panel-event-desc">${escapeHtml(event.description)}</div>` : ''}
                         </div>
@@ -802,12 +895,29 @@ function renderRoomTimeline() {
     if (!timeline || !countEl) return;
 
     const now = new Date();
+    // On met 'now' a 00:00:00 pour inclure les evts de la journee courante
+    now.setHours(0, 0, 0, 0);
+
     const futureDate = new Date();
     futureDate.setMonth(futureDate.getMonth() + 3);
 
-    const upcoming = roomEvents
-        .filter(e => e.date >= now && e.date <= futureDate)
-        .sort((a, b) => a.date - b.date);
+    const upcoming = [];
+    roomEvents.forEach(e => {
+        let occDate = new Date(e.date);
+        
+        if (e.recurrence === 'yearly') {
+            occDate.setFullYear(now.getFullYear());
+            if (occDate < now && occDate.toDateString() !== now.toDateString()) {
+                occDate.setFullYear(now.getFullYear() + 1);
+            }
+        }
+        
+        if (occDate >= now && occDate <= futureDate) {
+            upcoming.push({ ...e, displayDate: occDate });
+        }
+    });
+
+    upcoming.sort((a, b) => a.displayDate - b.displayDate);
 
     countEl.textContent = `${upcoming.length} evenement${upcoming.length > 1 ? 's' : ''}`;
 
@@ -818,7 +928,8 @@ function renderRoomTimeline() {
 
     timeline.innerHTML = '';
     upcoming.forEach(event => {
-        const daysDiff = Math.ceil((event.date - now) / (1000 * 60 * 60 * 24));
+        const d = event.displayDate;
+        const daysDiff = Math.floor((d - now) / (1000 * 60 * 60 * 24));
         const memberName = getMemberName(event.userId);
         const memberColor = getMemberColor(event.userId);
         const div = document.createElement('div');
@@ -827,15 +938,15 @@ function renderRoomTimeline() {
         div.onclick = async () => {
             if (event.userId === currentUserId) editRoomEvent(event);
             else {
-                roomCalendarDate = new Date(event.date.getFullYear(), event.date.getMonth(), 1);
+                roomCalendarDate = new Date(d.getFullYear(), d.getMonth(), 1);
                 await loadRoomEvents(currentRoomId);
-                selectRoomDay(new Date(event.date));
+                selectRoomDay(new Date(d));
             }
         };
         div.innerHTML = `
-            <div class="timeline-item-title">${escapeHtml(event.title)}</div>
+            <div class="timeline-item-title">${getEventIcon(event.type)} ${escapeHtml(event.title)} ${event.recurrence === 'yearly' ? '🔄' : ''}</div>
             <div class="timeline-item-date">
-                ${event.date.toLocaleDateString('fr')} a ${event.date.toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' })}
+                ${d.toLocaleDateString('fr')} a ${d.toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' })}
             </div>
             <div class="timeline-item-type">
                 ${daysDiff === 0 ? '🔴 Aujourd\'hui' : daysDiff === 1 ? '🟠 Demain' : `📅 Dans ${daysDiff} jours`}
@@ -864,6 +975,7 @@ function openRoomEventModal(date) {
     document.getElementById('roomEventRoomId').value = currentRoomId;
     document.getElementById('roomEventTitle').value = '';
     document.getElementById('roomEventType').value = 'rdv';
+    document.getElementById('roomEventRecurrence').value = 'none';
     document.getElementById('roomEventTime').value = '12:00';
     document.getElementById('roomEventDescription').value = '';
     document.getElementById('deleteRoomEventBtn').style.display = 'none';
@@ -890,6 +1002,7 @@ function editRoomEvent(event) {
     document.getElementById('roomEventRoomId').value = event.roomId;
     document.getElementById('roomEventTitle').value = event.title;
     document.getElementById('roomEventType').value = event.type;
+    document.getElementById('roomEventRecurrence').value = event.recurrence || 'none';
     document.getElementById('roomEventTime').value = eventDate.toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' });
     document.getElementById('roomEventDescription').value = event.description || '';
     document.getElementById('deleteRoomEventBtn').style.display = 'block';
@@ -1236,6 +1349,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const dateStr = document.getElementById('roomEventDate').value;
         const title = document.getElementById('roomEventTitle').value.trim();
         const type = document.getElementById('roomEventType').value;
+        const recurrence = document.getElementById('roomEventRecurrence').value;
         const time = document.getElementById('roomEventTime').value;
         const description = document.getElementById('roomEventDescription').value.trim();
 
@@ -1258,6 +1372,7 @@ document.addEventListener('DOMContentLoaded', () => {
             roomId: roomId,
             title: title,
             type: type,
+            recurrence: recurrence,
             date: eventDate,
             description: description,
             notified: false,
@@ -1322,7 +1437,130 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+
+    // Écouteurs pour le Modal Garde Alternée
+    document.addEventListener('click', (e) => {
+        // Event delegation pour openCustodyBtn car il est redessiné dynamiquement
+        if (e.target.id === 'openCustodyBtn') {
+            openCustodyModal();
+        }
+    });
+    
+    document.querySelector('.close-custody-modal')?.addEventListener('click', closeCustodyModal);
+    document.getElementById('saveCustodyBtn')?.addEventListener('click', saveCustodyConfig);
+    document.getElementById('disableCustodyBtn')?.addEventListener('click', disableCustodyConfig);
+    
+    document.getElementById('custodyModal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'custodyModal') closeCustodyModal();
+    });
+
 });
+
+// ──────────────────────────────────────────────
+// Logique Garde Alternée Modal
+// ──────────────────────────────────────────────
+function openCustodyModal() {
+    if (!currentOpenRoom) return;
+    const modal = document.getElementById('custodyModal');
+    if (!modal) return;
+
+    // Remplir les selecteurs Parents
+    const selectA = document.getElementById('custodyParentA');
+    const selectB = document.getElementById('custodyParentB');
+    selectA.innerHTML = '';
+    selectB.innerHTML = '';
+
+    (currentOpenRoom.members || []).forEach(m => {
+        const optionA = document.createElement('option');
+        optionA.value = m.uid;
+        optionA.textContent = m.name || m.email;
+        selectA.appendChild(optionA);
+
+        const optionB = document.createElement('option');
+        optionB.value = m.uid;
+        optionB.textContent = m.name || m.email;
+        selectB.appendChild(optionB);
+    });
+
+    const config = currentOpenRoom.custodyConfig;
+    const disableBtn = document.getElementById('disableCustodyBtn');
+    
+    if (config && config.enabled) {
+        selectA.value = config.parentA;
+        selectB.value = config.parentB;
+        document.getElementById('custodyStartDate').value = config.startDate;
+        disableBtn.style.display = 'inline-block';
+        document.getElementById('saveCustodyBtn').textContent = 'Mettre à jour';
+    } else {
+        document.getElementById('custodyStartDate').value = '';
+        disableBtn.style.display = 'none';
+        document.getElementById('saveCustodyBtn').textContent = 'Activer';
+    }
+
+    modal.style.display = 'flex';
+}
+
+function closeCustodyModal() {
+    const modal = document.getElementById('custodyModal');
+    if (modal) modal.style.display = 'none';
+}
+
+async function saveCustodyConfig() {
+    if (!currentOpenRoom) return;
+    
+    const parentA = document.getElementById('custodyParentA').value;
+    const parentB = document.getElementById('custodyParentB').value;
+    const startDate = document.getElementById('custodyStartDate').value;
+
+    if (!startDate) {
+        showAlert('Veuillez sélectionner une date de début');
+        return;
+    }
+
+    const config = {
+        enabled: true,
+        parentA: parentA,
+        parentB: parentB,
+        startDate: startDate,
+        updatedAt: new Date()
+    };
+
+    try {
+        document.getElementById('saveCustodyBtn').disabled = true;
+        await db.collection('rooms').doc(currentRoomId).update({
+            custodyConfig: config
+        });
+        currentOpenRoom.custodyConfig = config;
+        showAlert('Garde alternée activée !');
+        closeCustodyModal();
+        renderRoomCalendar();
+    } catch (err) {
+        console.error('Erreur sauvegarde garde:', err);
+        showAlert('Erreur: ' + err.message);
+    } finally {
+        document.getElementById('saveCustodyBtn').disabled = false;
+    }
+}
+
+async function disableCustodyConfig() {
+    if (!currentOpenRoom) return;
+    if (confirm('Désactiver la garde alternée pour ce salon ?')) {
+        try {
+            await db.collection('rooms').doc(currentRoomId).update({
+                'custodyConfig.enabled': false
+            });
+            if (currentOpenRoom.custodyConfig) {
+                currentOpenRoom.custodyConfig.enabled = false;
+            }
+            showAlert('Garde alternée désactivée');
+            closeCustodyModal();
+            renderRoomCalendar();
+        } catch (err) {
+            console.error('Erreur disable garde:', err);
+            showAlert('Erreur: ' + err.message);
+        }
+    }
+}
 
 // Charger les rooms quand l'auth est prete
 auth.onAuthStateChanged((user) => {

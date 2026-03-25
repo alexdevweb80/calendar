@@ -1,6 +1,25 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+
+    <!-- iOS spécifique -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Chronos">
+    <link rel="apple-touch-icon" href="/icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="/icons/icon-144x144.png">
+
+    <!-- Thème couleur pour Chrome Android -->
+    <meta name="theme-color" content="#07050f">
+
+    <!-- Général -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Chronos">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="dark">
@@ -8,17 +27,18 @@
     <title>Planning Partagé - Accueil</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
     <div class="container">
         <div class="glass-card hero-card">
-            <h1 class="neon-text">✨ WePlan ✨</h1>
+            <h1 class="neon-text">✨ Chronos-Planning ✨</h1>
             <p class="subtitle">Votre planning futuriste en mode néon</p>
-            
+
             <div class="hero-buttons">
                 <a href="login.html" class="neon-button">Se connecter</a>
                 <a href="register.html" class="neon-button outline">S'inscrire</a>
             </div>
-            
+
             <div class="features">
                 <div class="feature">
                     <div class="feature-icon">📅</div>
@@ -38,11 +58,12 @@
             </div>
         </div>
     </div>
-    
+
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
     <script src="js/firebase-config.js"></script>
     <script src="js/auth.js"></script>
 </body>
+
 </html>

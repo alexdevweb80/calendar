@@ -1,6 +1,25 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+
+    <!-- iOS spécifique -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Chronos">
+    <link rel="apple-touch-icon" href="/icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="/icons/icon-144x144.png">
+
+    <!-- Thème couleur pour Chrome Android -->
+    <meta name="theme-color" content="#07050f">
+
+    <!-- Général -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Chronos">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="dark">
@@ -8,48 +27,50 @@
     <title>Inscription - Planning Partagé</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
     <div class="container">
         <div class="glass-card auth-card">
             <h2 class="neon-text">✨ Inscription</h2>
-            
+
             <div id="errorMessage" class="error-message" style="display: none;"></div>
             <div id="successMessage" class="success-message" style="display: none;"></div>
-            
+
             <form id="registerForm">
                 <div class="input-group">
                     <label>Nom d'utilisateur</label>
                     <input type="text" id="username" class="glass-input" placeholder="CyberUser42" required>
                 </div>
-                
+
                 <div class="input-group">
                     <label>Email</label>
                     <input type="email" id="email" class="glass-input" placeholder="votre@email.com" required>
                 </div>
-                
+
                 <div class="input-group">
                     <label>Mot de passe</label>
                     <input type="password" id="password" class="glass-input" placeholder="Min. 6 caractères" required>
                 </div>
-                
+
                 <div class="input-group">
                     <label>Confirmer le mot de passe</label>
                     <input type="password" id="confirmPassword" class="glass-input" placeholder="••••••••" required>
                 </div>
-                
+
                 <button type="submit" class="neon-button">Créer mon compte</button>
             </form>
-            
+
             <p class="auth-link">
                 Déjà un compte ? <a href="login.html">Se connecter</a>
             </p>
         </div>
     </div>
-    
+
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
     <script src="js/firebase-config.js"></script>
     <script src="js/auth.js"></script>
 </body>
+
 </html>

@@ -1,6 +1,25 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+
+    <!-- iOS spécifique -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Chronos">
+    <link rel="apple-touch-icon" href="/icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="/icons/icon-144x144.png">
+
+    <!-- Thème couleur pour Chrome Android -->
+    <meta name="theme-color" content="#07050f">
+
+    <!-- Général -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Chronos">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="dark">
@@ -8,17 +27,18 @@
     <title>Dashboard - Planning Partagé</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
     <div id="alertContainer" class="alert-container"></div>
-    
+
     <div class="dashboard-header">
-        <h1 class="neon-text">📅 WePlan</h1>
+        <h1 class="neon-text">📅 Chronus-Planning</h1>
         <div class="user-info">
             <span id="userName" class="user-name"></span>
             <button id="logoutBtn" class="logout-button">Déconnexion</button>
         </div>
     </div>
-    
+
     <div class="dashboard-container">
 
         <!-- ═══ SALONS PRIVES ═══ -->
@@ -26,7 +46,8 @@
             <div class="rooms-header">
                 <h2 class="neon-text">👥 Mes salons</h2>
                 <div class="rooms-header-actions">
-                    <button id="openJoinRoomBtn" class="neon-button neon-button-secondary" type="button">🔑 Rejoindre un salon</button>
+                    <button id="openJoinRoomBtn" class="neon-button neon-button-secondary" type="button">🔑 Rejoindre un
+                        salon</button>
                     <button id="openCreateRoomBtn" class="neon-button" type="button">+ Creer un salon</button>
                 </div>
             </div>
@@ -49,7 +70,8 @@
                     <p id="quoteText" class="quote-text">Chargement...</p>
                     <span id="quoteAuthor" class="quote-author"></span>
                 </div>
-                <button id="newQuoteBtn" class="neon-button quote-refresh-btn" type="button">🔄 Nouvelle citation</button>
+                <button id="newQuoteBtn" class="neon-button quote-refresh-btn" type="button">🔄 Nouvelle
+                    citation</button>
             </div>
 
             <!-- Meteo en direct -->
@@ -68,7 +90,32 @@
         </div>
 
     </div>
-    
+
+    <!-- Modal Garde Alternée -->
+    <div id="custodyModal" class="modal" style="display: none;">
+        <div class="modal-content glass-card">
+            <span class="close-custody-modal close-modal" style="position: absolute; right: 20px; top: 20px; font-size: 24px; cursor: pointer;">&times;</span>
+            <h3 class="neon-text">👶 Garde Alternée</h3>
+            <p style="font-size: 13px; margin-bottom: 20px;">Définissez une règle de garde "1 semaine sur 2". Le calendrier s'occupera du reste !</p>
+            <div class="input-group">
+                <label>Parent A (Dès la date de début)</label>
+                <select id="custodyParentA" class="glass-input"></select>
+            </div>
+            <div class="input-group">
+                <label>Parent B (Semaine suivante)</label>
+                <select id="custodyParentB" class="glass-input"></select>
+            </div>
+            <div class="input-group">
+                <label>Date de début (Semaine du Parent A)</label>
+                <input type="date" id="custodyStartDate" class="glass-input" required>
+            </div>
+            <div class="modal-buttons" style="margin-top: 20px;">
+                <button id="saveCustodyBtn" class="neon-button" type="button">Activer</button>
+                <button id="disableCustodyBtn" class="delete-button" type="button" style="display:none;">Désactiver</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal creation de salon -->
     <div id="createRoomModal" class="modal" style="display: none;">
         <div class="modal-content glass-card">
@@ -93,7 +140,8 @@
             </div>
             <div class="input-group">
                 <label>Mot de passe du salon</label>
-                <input type="password" id="newRoomPassword" class="glass-input" placeholder="Min. 4 caracteres" required>
+                <input type="password" id="newRoomPassword" class="glass-input" placeholder="Min. 4 caracteres"
+                    required>
             </div>
             <div class="modal-buttons">
                 <button id="createRoomBtn" class="neon-button" type="button">Creer le salon</button>
@@ -108,11 +156,13 @@
             <h3 class="neon-text">🔑 Rejoindre un salon</h3>
             <div class="input-group">
                 <label>Code du salon</label>
-                <input type="text" id="joinRoomCode" class="glass-input" placeholder="Ex: A3K7W2" maxlength="6" style="text-transform:uppercase; letter-spacing:3px; font-size:1.2rem; text-align:center;" required>
+                <input type="text" id="joinRoomCode" class="glass-input" placeholder="Ex: A3K7W2" maxlength="6"
+                    style="text-transform:uppercase; letter-spacing:3px; font-size:1.2rem; text-align:center;" required>
             </div>
             <div class="input-group">
                 <label>Mot de passe</label>
-                <input type="password" id="joinRoomPassword" class="glass-input" placeholder="Mot de passe du salon" required>
+                <input type="password" id="joinRoomPassword" class="glass-input" placeholder="Mot de passe du salon"
+                    required>
             </div>
             <div class="modal-buttons">
                 <button id="joinRoomBtn" class="neon-button" type="button">Rejoindre</button>
@@ -137,10 +187,22 @@
                     <label>Type</label>
                     <select id="roomEventType" class="glass-input">
                         <option value="rdv">📅 Rendez-vous</option>
-                        <option value="fete">🎉 Fête</option>
+                        <option value="ecole">🏫 École</option>
+                        <option value="enfants">👶 Enfants</option>
                         <option value="reunion">💼 Réunion</option>
+                        <option value="medecin">🩺 Médecin</option>
+                        <option value="veterinaire">🐾 Vétérinaire</option>
+                        <option value="vacances">🏖️ Vacances</option>
                         <option value="anniversaire">🎂 Anniversaire</option>
+                        <option value="fete">🎉 Fête</option>
                         <option value="other">📝 Autre</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Récurrence</label>
+                    <select id="roomEventRecurrence" class="glass-input">
+                        <option value="none">Une seule fois</option>
+                        <option value="yearly">Tous les ans</option>
                     </select>
                 </div>
                 <div class="input-group">
@@ -153,7 +215,8 @@
                 </div>
                 <div class="modal-buttons">
                     <button type="submit" class="neon-button">Enregistrer</button>
-                    <button type="button" id="deleteRoomEventBtn" class="delete-button" style="display: none;">Supprimer</button>
+                    <button type="button" id="deleteRoomEventBtn" class="delete-button"
+                        style="display: none;">Supprimer</button>
                 </div>
             </form>
         </div>
@@ -168,4 +231,5 @@
     <script src="js/rooms.js"></script>
     <script src="js/widgets.js"></script>
 </body>
+
 </html>

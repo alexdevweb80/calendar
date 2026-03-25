@@ -34,7 +34,8 @@
     <div class="dashboard-header">
         <h1 class="neon-text">📅 WEPLAN</h1>
         <div class="user-info">
-            <span id="userName" class="user-name"></span>
+            <span id="userAvatarBtn" style="cursor: pointer; font-size: 24px; margin-right: 10px;" title="Modifier le profil">👤</span>
+            <span id="userName" class="user-name" style="cursor: pointer;" title="Modifier le profil"></span>
             <button id="logoutBtn" class="logout-button">Déconnexion</button>
         </div>
     </div>
@@ -89,6 +90,50 @@
             </div>
         </div>
 
+    </div>
+
+    <!-- Modal Paramètres Utilisateur -->
+    <div id="userSettingsModal" class="modal" style="display: none; z-index: 3000;">
+        <div class="modal-content glass-card">
+            <span class="close-settings-modal close-modal" style="position: absolute; right: 20px; top: 20px; font-size: 24px; cursor: pointer;">&times;</span>
+            <h3 class="neon-text">⚙️ Profil</h3>
+            <div class="input-group">
+                <label>Avatar (Emoji)</label>
+                <!-- Simple sélecteur d'emojis sympas -->
+                <select id="userAvatarSelect" class="glass-input" style="font-size: 20px; text-align: center;">
+                    <option value="👤">👤 Défaut</option>
+                    <option value="🦊">🦊 Renard</option>
+                    <option value="🐱">🐱 Chat</option>
+                    <option value="🐶">🐶 Chien</option>
+                    <option value="🐼">🐼 Panda</option>
+                    <option value="🦄">🦄 Licorne</option>
+                    <option value="🐸">🐸 Grenouille</option>
+                    <option value="🤖">🤖 Robot</option>
+                    <option value="👻">👻 Fantôme</option>
+                    <option value="👽">👽 Alien</option>
+                    <option value="🧙‍♂️">🧙‍♂️ Mage</option>
+                    <option value="🥷">🥷 Ninja</option>
+                    <option value="🧛‍♀️">🧛‍♀️ Vampire</option>
+                    <option value="🦸‍♂️">🦸‍♂️ Héros</option>
+                    <option value="👑">👑 Couronne</option>
+                    <option value="💎">💎 Diamant</option>
+                    <option value="🔥">🔥 Feu</option>
+                    <option value="⚡">⚡ Éclair</option>
+                    <option value="🌙">🌙 Lune</option>
+                    <option value="⭐">⭐ Étoile</option>
+                    <option value="🎵">🎵 Musique</option>
+                    <option value="🎨">🎨 Art</option>
+                    <option value="🚀">🚀 Fusée</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Pseudonyme</label>
+                <input type="text" id="userPseudoInput" class="glass-input" placeholder="Votre pseudo..." required>
+            </div>
+            <div class="modal-buttons" style="margin-top: 20px;">
+                <button id="saveUserProfileBtn" class="neon-button" type="button">Sauvegarder</button>
+            </div>
+        </div>
     </div>
 
     <!-- Modal Pop-up Rappel d'événements -->

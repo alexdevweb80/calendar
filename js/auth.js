@@ -48,7 +48,11 @@ auth.onAuthStateChanged((user) => {
         }
         const userNameElement = document.getElementById('userName');
         if (userNameElement) {
-            userNameElement.textContent = user.email.split('@')[0];
+            userNameElement.textContent = user.displayName || user.email.split('@')[0];
+        }
+        const userAvatarElement = document.getElementById('userAvatarBtn');
+        if (userAvatarElement) {
+            userAvatarElement.textContent = user.photoURL || '👤';
         }
     } else {
         if (!isAuthPage && !isHome) {
@@ -158,3 +162,94 @@ if (logoutBtn) {
         window.location.href = 'login.html';
     });
 }
+
+// ──────────────────────────────────────────────
+// Paramètres Utilisateur (Pseudo & Avatar)
+// ──────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    const avatarBtn = document.getElementById('userAvatarBtn');
+    const nameBtn = document.getElementById('userName');
+    const settingsModal = document.getElementById('userSettingsModal');
+    const closeBtn = document.querySelector('.close-settings-modal');
+    const saveBtn = document.getElementById('saveUserProfileBtn');
+
+    if (!settingsModal) return;
+
+    function openSettings() {
+        const user = auth.currentUser;
+        if (!user) return;
+        document.getElementById('userPseudoInput').value = user.displayName || user.email.split('@')[0];
+        document.getElementById('userAvatarSelect').value = user.photoURL || '👤';
+        settingsModal.style.display = 'flex';
+    }
+
+    avatarBtn?.addEventListener('click', openSettings);
+    nameBtn?.addEventListener('click', openSettings);
+    closeBtn?.addEventListener('click', () => settingsModal.style.display = 'none');
+    
+    settingsModal.addEventListener('click', (e) => {
+        if (e.target === settingsModal) settingsModal.style.display = 'none';
+    });
+
+    saveBtn?.addEventListener('click', async () => {
+        const newPseudo = document.getElementById('userPseudoInput').value.trim();
+        const newAvatar = document.getElementById('userAvatarSelect').value;
+
+        if (!newPseudo) return;
+
+        const user = auth.currentUser;
+        if (!user) return;
+
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Sauvegarde...';
+
+        try {
+            await user.updateProfile({ displayName: newPseudo, photoURL: newAvatar });
+
+            // Update user collection
+            await db.collection('users').doc(user.uid).set({
+                username: newPseudo,
+                avatar: newAvatar,
+                updatedAt: new Date()
+            }, { merge: true });
+
+            // Mettre à jour les rooms où l'utilisateur est présent
+            const batch = db.batch();
+            const roomsQuery = await db.collection('rooms').where('memberIds', 'array-contains', user.uid).get();
+
+            let roomCount = 0;
+            roomsQuery.forEach(doc => {
+                const roomData = doc.data();
+                const members = roomData.members || [];
+                const mIndex = members.findIndex(m => m.uid === user.uid);
+                
+                if (mIndex !== -1) {
+                    members[mIndex].name = newPseudo;
+                    members[mIndex].avatar = newAvatar;
+                    batch.update(doc.ref, { members: members });
+                    roomCount++;
+                }
+            });
+
+            if (roomCount > 0) {
+                await batch.commit();
+            }
+
+            document.getElementById('userName').textContent = newPseudo;
+            document.getElementById('userAvatarBtn').textContent = newAvatar;
+            
+            settingsModal.style.display = 'none';
+            if (typeof ChronosSounds !== 'undefined') ChronosSounds.playNotification();
+            
+            // Recharger la page pour refléter partout (calendrier, room list)
+            setTimeout(() => window.location.reload(), 500);
+
+        } catch (error) {
+            console.error('Erreur save profile:', error);
+            alert('Erreur: ' + error.message);
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Sauvegarder';
+        }
+    });
+});

@@ -206,9 +206,10 @@ async function openRoomDetail(room) {
     members.forEach(m => {
         const isMe = m.uid === currentUserId;
         const color = getMemberColor(m.uid);
+        const avatar = m.avatar || '👤';
         membersHtml += `
             <div class="room-member">
-                <span class="room-member-avatar" style="background-color: ${color};">${(m.name || m.email || '?')[0].toUpperCase()}</span>
+                <span class="room-member-avatar" style="background-color: ${color}; font-size: 16px;">${avatar}</span>
                 <div class="room-member-info">
                     <span class="room-member-name" style="font-weight: ${isMe ? 'bold' : 'normal'}; color: ${isMe ? 'var(--neon-cyan)' : 'inherit'}">
                         ${escapeHtml(m.name || m.email)} ${isMe ? '(Vous)' : ''}
@@ -1166,7 +1167,7 @@ async function createRoom() {
             roomCode: roomCode,
             passwordHash: hashedPassword,
             creatorId: currentUserId,
-            members: [{ uid: currentUserId, email: userEmail, name: userName }],
+            members: [{ uid: currentUserId, email: userEmail, name: userName, avatar: auth.currentUser?.photoURL || '👤' }],
             memberIds: [currentUserId],
             createdAt: new Date(),
             updatedAt: new Date()
@@ -1266,7 +1267,7 @@ async function joinRoom() {
         // Ajouter l'utilisateur
         const userEmail = auth.currentUser?.email || '';
         const userName = auth.currentUser?.displayName || userEmail;
-        const newMember = { uid: currentUserId, email: userEmail, name: userName };
+        const newMember = { uid: currentUserId, email: userEmail, name: userName, avatar: auth.currentUser?.photoURL || '👤' };
 
         await db.collection('rooms').doc(roomDoc.id).update({
             members: firebase.firestore.FieldValue.arrayUnion(newMember),

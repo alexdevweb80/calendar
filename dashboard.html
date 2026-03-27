@@ -242,7 +242,6 @@
             <span class="close-room-event-modal">&times;</span>
             <h3 class="neon-text" id="roomEventModalTitle">Nouvel événement du salon</h3>
             <form id="roomEventForm">
-                <input type="hidden" id="roomEventDate">
                 <input type="hidden" id="roomEventId">
                 <input type="hidden" id="roomEventRoomId">
                 <div class="input-group">
@@ -274,9 +273,29 @@
                         <option value="yearly">Tous les ans</option>
                     </select>
                 </div>
-                <div class="input-group">
-                    <label>Heure</label>
-                    <input type="time" id="roomEventTime" class="glass-input">
+                <div class="input-group checkbox-group" style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                    <input type="checkbox" id="roomEventAllDay" style="width: 18px; height: 18px; cursor: pointer;">
+                    <label for="roomEventAllDay" style="margin-bottom: 0; cursor: pointer; color: var(--neon-cyan); font-weight: bold;">Toute la journée</label>
+                </div>
+                <div class="input-grid" id="roomEventTimeGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="input-group">
+                        <label>Date de début</label>
+                        <input type="date" id="roomEventStartDate" class="glass-input" required>
+                    </div>
+                    <div class="input-group" id="roomEventStartTimeGroup">
+                        <label>Heure de début</label>
+                        <input type="time" id="roomEventStartTime" class="glass-input" required>
+                    </div>
+                </div>
+                <div class="input-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="input-group">
+                        <label>Date de fin</label>
+                        <input type="date" id="roomEventEndDate" class="glass-input" required>
+                    </div>
+                    <div class="input-group" id="roomEventEndTimeGroup">
+                        <label>Heure de fin</label>
+                        <input type="time" id="roomEventEndTime" class="glass-input" required>
+                    </div>
                 </div>
                 <div class="input-group">
                     <label>Description</label>

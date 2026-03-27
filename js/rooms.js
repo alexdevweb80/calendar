@@ -457,21 +457,19 @@ async function loadRoomEvents(roomId) {
             if (!data.date) { console.warn('[Rooms] Event sans date:', doc.id); return; }
 
             // Gerer tous les formats de date possibles
-            let eventDate;
-            if (typeof data.date.toDate === 'function') {
-                eventDate = data.date.toDate();
-            } else if (data.date instanceof Date) {
-                eventDate = data.date;
-            } else if (typeof data.date === 'string') {
-                eventDate = new Date(data.date);
-            } else if (typeof data.date === 'number') {
-                eventDate = new Date(data.date);
-            } else {
-                console.warn('[Rooms] Format de date inconnu pour event:', doc.id, data.date);
-                return;
-            }
+            let eventDate, eventEndDate;
+            
+            // Conversion Date/Start
+            if (data.date && typeof data.date.toDate === 'function') eventDate = data.date.toDate();
+            else if (data.date instanceof Date) eventDate = data.date;
+            else if (data.date) eventDate = new Date(data.date);
 
-            if (isNaN(eventDate.getTime())) {
+            // Conversion EndDate
+            if (data.endDate && typeof data.endDate.toDate === 'function') eventEndDate = data.endDate.toDate();
+            else if (data.endDate instanceof Date) eventEndDate = data.endDate;
+            else if (data.endDate) eventEndDate = new Date(data.endDate);
+
+            if (!eventDate || isNaN(eventDate.getTime())) {
                 console.warn('[Rooms] Date invalide pour event:', doc.id, data.date);
                 return;
             }
@@ -479,7 +477,8 @@ async function loadRoomEvents(roomId) {
             roomEvents.push({
                 id: doc.id,
                 ...data,
-                date: eventDate
+                date: eventDate,
+                endDate: eventEndDate || eventDate // Fallback pour les anciens évènements
             });
         });
 
@@ -518,6 +517,12 @@ function getRoomEventsForDate(date) {
         const evDate = new Date(ev.date);
         const evReset = new Date(evDate).setHours(0,0,0,0);
         
+        if (ev.recurrence === 'none') {
+            const evEnd = ev.endDate || evDate;
+            const evEndReset = new Date(evEnd).setHours(0,0,0,0);
+            return dReset >= evReset && dReset <= evEndReset;
+        }
+
         if (ev.recurrence === 'yearly') {
             return evDate.getMonth() === date.getMonth() && 
                    evDate.getDate() === date.getDate() && 
@@ -757,7 +762,20 @@ function renderRoomDayPanel(date) {
     } else {
         html += `<div class="day-panel-events">`;
         dayEvents.forEach(event => {
-            const time = event.date.toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' });
+            const startStr = event.date.toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' });
+            const evEnd = event.endDate;
+            let timeDisplay = startStr;
+            
+            if (event.allDay) {
+                timeDisplay = 'Toute la journée';
+            } else if (evEnd) {
+                const endStr = evEnd.toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' });
+                if (evEnd.toDateString() !== event.date.toDateString()) {
+                    timeDisplay = `${startStr} - ${evEnd.toLocaleDateString('fr', { day: 'numeric', month: 'short' })} ${endStr}`;
+                } else {
+                    timeDisplay = `${startStr} - ${endStr}`;
+                }
+            }
             const memberName = getMemberName(event.userId);
             const memberColor = getMemberColor(event.userId);
             const isOwner = event.userId === currentUserId;
@@ -765,7 +783,7 @@ function renderRoomDayPanel(date) {
                 <div class="day-panel-event ${event.type}" data-event-id="${event.id}">
                     <div class="room-event-member-bar" style="background:${memberColor};"></div>
                     <div class="day-panel-event-body">
-                        <div class="day-panel-event-time">${time}</div>
+                        <div class="day-panel-event-time">${timeDisplay}</div>
                         <div class="day-panel-event-info">
                             <div class="day-panel-event-title">${getEventIcon(event.type)} ${escapeHtml(event.title)}</div>
                             <div class="day-panel-event-author" style="color:${memberColor};">${escapeHtml(memberName)}</div>
@@ -993,7 +1011,9 @@ function renderRoomTimeline() {
         div.innerHTML = `
             <div class="timeline-item-title">${getEventIcon(event.type)} ${escapeHtml(event.title)} ${event.recurrence !== 'none' ? '🔄' : ''}</div>
             <div class="timeline-item-date">
-                ${d.toLocaleDateString('fr')} a ${d.toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' })}
+                ${d.toLocaleDateString('fr')} ${event.allDay ? '— Toute la journée' : `de ${d.toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' })}`}
+                ${!event.allDay && event.endDate && event.endDate.getTime() !== d.getTime() ? `au ${event.endDate.toLocaleDateString('fr')} à ${event.endDate.toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' })}` : ''}
+                ${event.allDay && event.endDate && event.endDate.toDateString() !== d.toDateString() ? `au ${event.endDate.toLocaleDateString('fr')}` : ''}
             </div>
             <div class="timeline-item-type">
                 ${daysDiff === 0 ? '🔴 Aujourd\'hui' : daysDiff === 1 ? '🟠 Demain' : `📅 Dans ${daysDiff} jours`}
@@ -1014,16 +1034,32 @@ function openRoomEventModal(date) {
     const modal = document.getElementById('roomEventModal');
     if (!modal) return;
 
-    document.getElementById('roomEventModalTitle').textContent = `Nouvel evenement — ${date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}`;
-    // Stocker la date en format local YYYY-MM-DD pour eviter le decalage UTC
+    document.getElementById('roomEventModalTitle').textContent = `Nouvel evenement`;
+    
+    // Format local YYYY-MM-DD
     const localDateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-    document.getElementById('roomEventDate').value = localDateStr;
+    
     document.getElementById('roomEventId').value = '';
     document.getElementById('roomEventRoomId').value = currentRoomId;
     document.getElementById('roomEventTitle').value = '';
     document.getElementById('roomEventType').value = 'rdv';
     document.getElementById('roomEventRecurrence').value = 'none';
-    document.getElementById('roomEventTime').value = '12:00';
+    
+    // Nouveaux champs
+    const allDayCheck = document.getElementById('roomEventAllDay');
+    if (allDayCheck) {
+        allDayCheck.checked = false;
+        const startGroup = document.getElementById('roomEventStartTimeGroup');
+        const endGroup = document.getElementById('roomEventEndTimeGroup');
+        if (startGroup) startGroup.style.display = 'block';
+        if (endGroup) endGroup.style.display = 'block';
+    }
+    
+    document.getElementById('roomEventStartDate').value = localDateStr;
+    document.getElementById('roomEventStartTime').value = '12:00';
+    document.getElementById('roomEventEndDate').value = localDateStr;
+    document.getElementById('roomEventEndTime').value = '13:00';
+    
     document.getElementById('roomEventDescription').value = '';
     document.getElementById('deleteRoomEventBtn').style.display = 'none';
 
@@ -1040,17 +1076,37 @@ function editRoomEvent(event) {
     const modal = document.getElementById('roomEventModal');
     if (!modal) return;
 
-    const eventDate = new Date(event.date);
-    document.getElementById('roomEventModalTitle').textContent = `Modifier — ${eventDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}`;
-    // Stocker la date en format local YYYY-MM-DD pour eviter le decalage UTC
-    const localDateStr = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}-${String(eventDate.getDate()).padStart(2, '0')}`;
-    document.getElementById('roomEventDate').value = localDateStr;
+    const startDate = new Date(event.date);
+    const endDate = event.endDate ? (event.endDate.toDate ? event.endDate.toDate() : new Date(event.endDate)) : new Date(startDate.getTime() + 3600000);
+
+    document.getElementById('roomEventModalTitle').textContent = `Modifier l'événement`;
+    
+    const startLocalDate = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')}`;
+    const startLocalTime = startDate.toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' }).replace('h', ':');
+    
+    const endLocalDate = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')}`;
+    const endLocalTime = endDate.toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' }).replace('h', ':');
+
     document.getElementById('roomEventId').value = event.id;
     document.getElementById('roomEventRoomId').value = event.roomId;
     document.getElementById('roomEventTitle').value = event.title;
     document.getElementById('roomEventType').value = event.type;
     document.getElementById('roomEventRecurrence').value = event.recurrence || 'none';
-    document.getElementById('roomEventTime').value = eventDate.toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' });
+    
+    const allDayCheck = document.getElementById('roomEventAllDay');
+    if (allDayCheck) {
+        allDayCheck.checked = !!event.allDay;
+        const startGroup = document.getElementById('roomEventStartTimeGroup');
+        const endGroup = document.getElementById('roomEventEndTimeGroup');
+        if (startGroup) startGroup.style.display = event.allDay ? 'none' : 'block';
+        if (endGroup) endGroup.style.display = event.allDay ? 'none' : 'block';
+    }
+
+    document.getElementById('roomEventStartDate').value = startLocalDate;
+    document.getElementById('roomEventStartTime').value = startLocalTime;
+    document.getElementById('roomEventEndDate').value = endLocalDate;
+    document.getElementById('roomEventEndTime').value = endLocalTime;
+
     document.getElementById('roomEventDescription').value = event.description || '';
     document.getElementById('deleteRoomEventBtn').style.display = 'block';
 
@@ -1383,6 +1439,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.id === 'roomEventModal') closeRoomEventModal();
     });
 
+    // Toggle All Day
+    document.getElementById('roomEventAllDay')?.addEventListener('change', (e) => {
+        const isAllDay = e.target.checked;
+        const startGroup = document.getElementById('roomEventStartTimeGroup');
+        const endGroup = document.getElementById('roomEventEndTimeGroup');
+        if (startGroup) startGroup.style.display = isAllDay ? 'none' : 'block';
+        if (endGroup) endGroup.style.display = isAllDay ? 'none' : 'block';
+    });
+
     // CRUD evenement salon
     document.getElementById('roomEventForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -1393,11 +1458,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const eventId = document.getElementById('roomEventId').value;
         const roomId = document.getElementById('roomEventRoomId').value;
-        const dateStr = document.getElementById('roomEventDate').value;
+        
+        const startDateStr = document.getElementById('roomEventStartDate').value;
+        const startTimeStr = document.getElementById('roomEventStartTime').value;
+        const endDateStr = document.getElementById('roomEventEndDate').value;
+        const endTimeStr = document.getElementById('roomEventEndTime').value;
+        
         const title = document.getElementById('roomEventTitle').value.trim();
         const type = document.getElementById('roomEventType').value;
         const recurrence = document.getElementById('roomEventRecurrence').value;
-        const time = document.getElementById('roomEventTime').value;
+        const allDay = document.getElementById('roomEventAllDay')?.checked || false;
         const description = document.getElementById('roomEventDescription').value.trim();
 
         if (!title) {
@@ -1407,12 +1477,20 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const timeParts = (time || '00:00').split(':');
-        const hours = parseInt(timeParts[0], 10) || 0;
-        const minutes = parseInt(timeParts[1], 10) || 0;
-        // dateStr est en format YYYY-MM-DD (local), parser manuellement pour eviter UTC
-        const dateParts = dateStr.split('-').map(Number);
-        const eventDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], hours, minutes, 0, 0);
+        const startParts = startDateStr.split('-').map(Number);
+        const startTimeParts = allDay ? [0, 0] : (startTimeStr || '00:00').split(':').map(Number);
+        const startDate = new Date(startParts[0], startParts[1] - 1, startParts[2], startTimeParts[0], startTimeParts[1], 0, 0);
+
+        const endParts = endDateStr.split('-').map(Number);
+        const endTimeParts = allDay ? [23, 59] : (endTimeStr || '00:00').split(':').map(Number);
+        const endDate = new Date(endParts[0], endParts[1] - 1, endParts[2], endTimeParts[0], endTimeParts[1], 0, 0);
+
+        if (endDate < startDate) {
+            showAlert('La date de fin doit être après la date de début');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Enregistrer';
+            return;
+        }
 
         const eventData = {
             userId: currentUserId,
@@ -1420,13 +1498,15 @@ document.addEventListener('DOMContentLoaded', () => {
             title: title,
             type: type,
             recurrence: recurrence,
-            date: eventDate,
+            allDay: allDay,
+            date: startDate, // On garde 'date' pour la compatibilité (c'est le début)
+            endDate: endDate,
             description: description,
             notified: false,
             updatedAt: new Date()
         };
 
-        console.log('[Rooms] Sauvegarde evenement:', { roomId, dateStr, eventDate: eventDate.toString(), eventData });
+        console.log('[Rooms] Sauvegarde evenement:', { roomId, startDate: startDate.toString(), endDate: endDate.toString(), eventData });
 
         try {
             if (eventId) {
@@ -1598,7 +1678,9 @@ function checkUpcomingEventsPopUp(roomId) {
             <div style="background: rgba(255,255,255,0.05); border-left: 4px solid ${memberColor}; padding: 10px; border-radius: 8px;">
                 <div style="font-weight: bold; color: #fff;">${getEventIcon(event.type)} ${escapeHtml(event.title)} ${event.recurrence !== 'none' ? '🔄' : ''}</div>
                 <div style="font-size: 12px; opacity: 0.8; margin-top: 4px;">
-                    <span style="color: var(--neon-cyan)">${dayLabel}</span> à ${d.toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' })}
+                    <span style="color: var(--neon-cyan)">${dayLabel}</span> ${event.allDay ? '— Toute la journée' : `de ${d.toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' })}`}
+                    ${!event.allDay && event.endDate ? `au ${event.endDate.toLocaleDateString('fr')} ${event.endDate.toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' })}` : ''}
+                    ${event.allDay && event.endDate && event.endDate.toDateString() !== d.toDateString() ? `au ${event.endDate.toLocaleDateString('fr')}` : ''}
                     <span style="color: ${memberColor}; margin-left: 10px;">👤 ${escapeHtml(getMemberName(event.userId))}</span>
                 </div>
             </div>

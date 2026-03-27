@@ -635,29 +635,49 @@ function renderRoomCalendar() {
         let custodyIndicatorHtml = '';
         if (currentOpenRoom && currentOpenRoom.custodyConfig && currentOpenRoom.custodyConfig.enabled) {
             const config = currentOpenRoom.custodyConfig;
-            const configDateStr = config.startDate; // YYYY-MM-DD
-            const configParts = configDateStr.split('-');
-            const configDate = new Date(configParts[0], configParts[1] - 1, configParts[2]);
             
-            // Calculer difference en jours (ignorer l'heure)
-            const cellDateUTC = Date.UTC(cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate());
-            const configDateUTC = Date.UTC(configDate.getFullYear(), configDate.getMonth(), configDate.getDate());
+            // Dates de debut et fin
+            const startParts = config.startDate.split('-');
+            const startHourParts = (config.startTime || '00:00').split(':');
+            const configStartDate = new Date(startParts[0], startParts[1] - 1, startParts[2], startHourParts[0], startHourParts[1]);
             
-            let parentUid = null;
-            if (cellDateUTC >= configDateUTC) {
-                const diffDays = Math.floor((cellDateUTC - configDateUTC) / (1000 * 60 * 60 * 24));
-                const cycleWeek = Math.floor(diffDays / 7);
-                parentUid = (cycleWeek % 2 === 0) ? config.parentA : config.parentB;
-            } else {
-                // Pour les dates antérieures au début de la règle : on recule !
-                const diffDays = Math.floor((configDateUTC - cellDateUTC) / (1000 * 60 * 60 * 24));
-                // Si on recule de 1 à 7 jours -> semaine précédente = alternance
-                const cycleWeekBefore = Math.floor((diffDays - 1) / 7);
-                parentUid = (cycleWeekBefore % 2 === 0) ? config.parentB : config.parentA;
+            let configEndDate = null;
+            if (config.endDate) {
+                const endParts = config.endDate.split('-');
+                const endHourParts = (config.endTime || '23:59').split(':');
+                configEndDate = new Date(endParts[0], endParts[1] - 1, endParts[2], endHourParts[0], endHourParts[1]);
             }
-            if (parentUid) {
-                const parentColor = getMemberColor(parentUid);
-                custodyIndicatorHtml = `<div class="custody-indicator" style="background-color: ${parentColor};" title="Garde: ${getMemberName(parentUid)}">👶</div>`;
+
+            // Verifier si la cellule est dans la plage [start, end]
+            const cellStart = new Date(cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate(), 0, 0);
+            const cellEnd = new Date(cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate(), 23, 59);
+
+            if (cellEnd >= configStartDate && (!configEndDate || cellStart <= configEndDate)) {
+                // Calculer l'alternance
+                const diffTime = cellStart.getTime() - configStartDate.getTime();
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                
+                // Si on est dans la meme journee que le debut, on doit regarder l'heure pour plus de precision ?
+                // Pour le calendrier par jour, on simplifie par semaine.
+                // cycleWeek = nombre de semaines entieres depuis le debut
+                const cycleWeek = Math.floor(diffDays / 7);
+                
+                let parentUid = (cycleWeek % 2 === 0) ? config.parentA : config.parentB;
+                
+                if (parentUid) {
+                    const parentColor = getMemberColor(parentUid);
+                    custodyIndicatorHtml = `<div class="custody-indicator" style="background-color: ${parentColor};" title="Garde: ${getMemberName(parentUid)}">👶</div>`;
+                }
+            } else if (cellStart < configStartDate) {
+                // Optionnel: Calculer en arrière si besoin, mais souvent on commence à la date donnée
+                const diffTime = configStartDate.getTime() - cellEnd.getTime();
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                const cycleWeekBefore = Math.floor((diffDays - 1) / 7);
+                let parentUid = (cycleWeekBefore % 2 === 0) ? config.parentB : config.parentA;
+                if (parentUid) {
+                    const parentColor = getMemberColor(parentUid);
+                    custodyIndicatorHtml = `<div class="custody-indicator" style="background-color: ${parentColor};" title="Garde: ${getMemberName(parentUid)}">👶</div>`;
+                }
             }
         }
 
@@ -1726,11 +1746,17 @@ function openCustodyModal() {
     if (config && config.enabled) {
         selectA.value = config.parentA;
         selectB.value = config.parentB;
-        document.getElementById('custodyStartDate').value = config.startDate;
+        document.getElementById('custodyStartDate').value = config.startDate || '';
+        document.getElementById('custodyStartTime').value = config.startTime || '00:00';
+        document.getElementById('custodyEndDate').value = config.endDate || '';
+        document.getElementById('custodyEndTime').value = config.endTime || '23:59';
         disableBtn.style.display = 'inline-block';
         document.getElementById('saveCustodyBtn').textContent = 'Mettre à jour';
     } else {
         document.getElementById('custodyStartDate').value = '';
+        document.getElementById('custodyStartTime').value = '00:00';
+        document.getElementById('custodyEndDate').value = '';
+        document.getElementById('custodyEndTime').value = '23:59';
         disableBtn.style.display = 'none';
         document.getElementById('saveCustodyBtn').textContent = 'Activer';
     }
@@ -1749,6 +1775,9 @@ async function saveCustodyConfig() {
     const parentA = document.getElementById('custodyParentA').value;
     const parentB = document.getElementById('custodyParentB').value;
     const startDate = document.getElementById('custodyStartDate').value;
+    const startTime = document.getElementById('custodyStartTime').value;
+    const endDate = document.getElementById('custodyEndDate').value;
+    const endTime = document.getElementById('custodyEndTime').value;
 
     if (!startDate) {
         showAlert('Veuillez sélectionner une date de début');
@@ -1760,6 +1789,9 @@ async function saveCustodyConfig() {
         parentA: parentA,
         parentB: parentB,
         startDate: startDate,
+        startTime: startTime,
+        endDate: endDate,
+        endTime: endTime,
         updatedAt: new Date()
     };
 

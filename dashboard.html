@@ -170,9 +170,25 @@
                 <label>Parent B (Semaine suivante)</label>
                 <select id="custodyParentB" class="glass-input"></select>
             </div>
-            <div class="input-group">
-                <label>Date de début (Semaine du Parent A)</label>
-                <input type="date" id="custodyStartDate" class="glass-input" required>
+            <div class="input-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="input-group">
+                    <label>Date de début</label>
+                    <input type="date" id="custodyStartDate" class="glass-input" required>
+                </div>
+                <div class="input-group">
+                    <label>Heure de début</label>
+                    <input type="time" id="custodyStartTime" class="glass-input" required value="00:00">
+                </div>
+            </div>
+            <div class="input-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="input-group">
+                    <label>Date de fin (Optionnel)</label>
+                    <input type="date" id="custodyEndDate" class="glass-input">
+                </div>
+                <div class="input-group">
+                    <label>Heure de fin</label>
+                    <input type="time" id="custodyEndTime" class="glass-input" value="23:59">
+                </div>
             </div>
             <div class="modal-buttons" style="margin-top: 20px;">
                 <button id="saveCustodyBtn" class="neon-button" type="button">Activer</button>
@@ -309,6 +325,9 @@
             </form>
         </div>
     </div>
+    
+    <!-- Panneau de détail du jour -->
+    <div id="roomDayPanel" class="room-day-panel glass-card"></div>
 
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>

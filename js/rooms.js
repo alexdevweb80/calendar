@@ -513,13 +513,28 @@ function getRoomCalendarGridBounds(baseDate) {
 }
 
 function getRoomEventsForDate(date) {
+    const dReset = new Date(date).setHours(0,0,0,0);
     return roomEvents.filter(ev => {
+        const evDate = new Date(ev.date);
+        const evReset = new Date(evDate).setHours(0,0,0,0);
+        
         if (ev.recurrence === 'yearly') {
-            return ev.date.getMonth() === date.getMonth() && 
-                   ev.date.getDate() === date.getDate() && 
-                   date.getFullYear() >= ev.date.getFullYear();
+            return evDate.getMonth() === date.getMonth() && 
+                   evDate.getDate() === date.getDate() && 
+                   dReset >= evReset;
         }
-        return ev.date.toDateString() === date.toDateString();
+        if (ev.recurrence === 'monthly') {
+            return evDate.getDate() === date.getDate() && dReset >= evReset;
+        }
+        if (ev.recurrence === 'weekly') {
+            const diffDays = Math.round((dReset - evReset) / (1000 * 60 * 60 * 24));
+            return diffDays >= 0 && diffDays % 7 === 0;
+        }
+        if (ev.recurrence === 'biweekly') {
+            const diffDays = Math.round((dReset - evReset) / (1000 * 60 * 60 * 24));
+            return diffDays >= 0 && diffDays % 14 === 0;
+        }
+        return evReset === dReset;
     });
 }
 
@@ -909,15 +924,41 @@ function renderRoomTimeline() {
 
     const upcoming = [];
     roomEvents.forEach(e => {
-        let occDate = new Date(e.date);
+        let evDate = new Date(e.date);
+        let evReset = new Date(evDate).setHours(0,0,0,0);
+        let occDate = new Date(evDate);
         
         if (e.recurrence === 'yearly') {
             occDate.setFullYear(now.getFullYear());
             if (occDate < now && occDate.toDateString() !== now.toDateString()) {
                 occDate.setFullYear(now.getFullYear() + 1);
             }
+        } else if (e.recurrence === 'monthly') {
+            occDate.setFullYear(now.getFullYear(), now.getMonth());
+            if (occDate < now && occDate.toDateString() !== now.toDateString()) {
+                occDate.setMonth(now.getMonth() + 1);
+            }
+        } else if (e.recurrence === 'weekly') {
+            const diffDays = Math.round((now - evReset) / (1000 * 60 * 60 * 24));
+            if (diffDays > 0) {
+                const daysToNext = (7 - (diffDays % 7)) % 7;
+                occDate = new Date(now.getTime() + daysToNext * 24 * 60 * 60 * 1000);
+            } else {
+                occDate = new Date(evDate);
+            }
+        } else if (e.recurrence === 'biweekly') {
+            const diffDays = Math.round((now - evReset) / (1000 * 60 * 60 * 24));
+            if (diffDays > 0) {
+                const daysToNext = (14 - (diffDays % 14)) % 14;
+                occDate = new Date(now.getTime() + daysToNext * 24 * 60 * 60 * 1000);
+            } else {
+                occDate = new Date(evDate);
+            }
         }
         
+        // S'assurer que l'heure est conservee
+        occDate.setHours(evDate.getHours(), evDate.getMinutes(), 0, 0);
+
         if (occDate >= now && occDate <= futureDate) {
             upcoming.push({ ...e, displayDate: occDate });
         }
@@ -950,7 +991,7 @@ function renderRoomTimeline() {
             }
         };
         div.innerHTML = `
-            <div class="timeline-item-title">${getEventIcon(event.type)} ${escapeHtml(event.title)} ${event.recurrence === 'yearly' ? '🔄' : ''}</div>
+            <div class="timeline-item-title">${getEventIcon(event.type)} ${escapeHtml(event.title)} ${event.recurrence !== 'none' ? '🔄' : ''}</div>
             <div class="timeline-item-date">
                 ${d.toLocaleDateString('fr')} a ${d.toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' })}
             </div>
@@ -1498,13 +1539,36 @@ function checkUpcomingEventsPopUp(roomId) {
 
     const upcoming = [];
     roomEvents.forEach(e => {
-        let occDate = new Date(e.date);
+        let evDate = new Date(e.date);
+        let evReset = new Date(evDate).setHours(0,0,0,0);
+        let occDate = new Date(evDate);
+
         if (e.recurrence === 'yearly') {
             occDate.setFullYear(now.getFullYear());
             if (occDate < startWindow && occDate.toDateString() !== now.toDateString()) {
                 occDate.setFullYear(now.getFullYear() + 1);
             }
+        } else if (e.recurrence === 'monthly') {
+            occDate.setFullYear(now.getFullYear(), now.getMonth());
+            if (occDate < startWindow && occDate.toDateString() !== now.toDateString()) {
+                occDate.setMonth(now.getMonth() + 1);
+            }
+        } else if (e.recurrence === 'weekly') {
+            const diffDays = Math.round((now - evReset) / (1000 * 60 * 60 * 24));
+            if (diffDays > 0) {
+                const daysToNext = (7 - (diffDays % 7)) % 7;
+                occDate = new Date(now.getTime() + daysToNext * 24 * 60 * 60 * 1000);
+            }
+        } else if (e.recurrence === 'biweekly') {
+            const diffDays = Math.round((now - evReset) / (1000 * 60 * 60 * 24));
+            if (diffDays > 0) {
+                const daysToNext = (14 - (diffDays % 14)) % 14;
+                occDate = new Date(now.getTime() + daysToNext * 24 * 60 * 60 * 1000);
+            }
         }
+
+        occDate.setHours(evDate.getHours(), evDate.getMinutes(), 0, 0);
+
         if (occDate >= startWindow && occDate <= endWindow) {
             upcoming.push({ ...e, displayDate: occDate });
         }
@@ -1532,7 +1596,7 @@ function checkUpcomingEventsPopUp(roomId) {
 
         listContainer.innerHTML += `
             <div style="background: rgba(255,255,255,0.05); border-left: 4px solid ${memberColor}; padding: 10px; border-radius: 8px;">
-                <div style="font-weight: bold; color: #fff;">${getEventIcon(event.type)} ${escapeHtml(event.title)} ${event.recurrence === 'yearly' ? '🔄' : ''}</div>
+                <div style="font-weight: bold; color: #fff;">${getEventIcon(event.type)} ${escapeHtml(event.title)} ${event.recurrence !== 'none' ? '🔄' : ''}</div>
                 <div style="font-size: 12px; opacity: 0.8; margin-top: 4px;">
                     <span style="color: var(--neon-cyan)">${dayLabel}</span> à ${d.toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' })}
                     <span style="color: ${memberColor}; margin-left: 10px;">👤 ${escapeHtml(getMemberName(event.userId))}</span>

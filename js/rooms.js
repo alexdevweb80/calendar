@@ -1722,22 +1722,14 @@ function openCustodyModal() {
     const modal = document.getElementById('custodyModal');
     if (!modal) return;
 
-    // Remplir les selecteurs Parents
     const selectA = document.getElementById('custodyParentA');
-    const selectB = document.getElementById('custodyParentB');
     selectA.innerHTML = '';
-    selectB.innerHTML = '';
 
     (currentOpenRoom.members || []).forEach(m => {
         const optionA = document.createElement('option');
         optionA.value = m.uid;
         optionA.textContent = m.name || m.email;
         selectA.appendChild(optionA);
-
-        const optionB = document.createElement('option');
-        optionB.value = m.uid;
-        optionB.textContent = m.name || m.email;
-        selectB.appendChild(optionB);
     });
 
     const config = currentOpenRoom.custodyConfig;
@@ -1745,7 +1737,6 @@ function openCustodyModal() {
     
     if (config && config.enabled) {
         selectA.value = config.parentA;
-        selectB.value = config.parentB;
         document.getElementById('custodyStartDate').value = config.startDate || '';
         document.getElementById('custodyStartTime').value = config.startTime || '00:00';
         document.getElementById('custodyEndDate').value = config.endDate || '';
@@ -1773,7 +1764,6 @@ async function saveCustodyConfig() {
     if (!currentOpenRoom) return;
     
     const parentA = document.getElementById('custodyParentA').value;
-    const parentB = document.getElementById('custodyParentB').value;
     const startDate = document.getElementById('custodyStartDate').value;
     const startTime = document.getElementById('custodyStartTime').value;
     const endDate = document.getElementById('custodyEndDate').value;
@@ -1787,7 +1777,6 @@ async function saveCustodyConfig() {
     const config = {
         enabled: true,
         parentA: parentA,
-        parentB: parentB,
         startDate: startDate,
         startTime: startTime,
         endDate: endDate,
